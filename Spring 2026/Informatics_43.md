@@ -1247,3 +1247,177 @@ How do these relate to software architecture?
 	- Architecture, functional decomposition, relational database design, OO design/UML, UI design, sketching
 - Designs are used iteratively to think, talk, and prescribe
 - Software engineering is all about constructing and elaborating abstractions/models
+
+# Lecture 10: How Do We Structure the Software in Detail? (Part 2)
+
+**Last Lecture Recap**
+- Design phase of software engineering → the "how" to the "what" of requirements
+	- Architecture, functional decomposition, relational database design, OO design/UML, UI design, sketching
+- Designs are used iteratively to think, talk, and prescribe
+- Software engineering is all about constructing and elaborating abstractions/models
+
+**Software Design Recap**
+- All creative decisions, includes high-level and low-level
+- Different notations and models allow designers to focus on a perspective, while freed from thinking of others
+- Design is used to:
+	- Think
+	- Talk
+	- Prescribe
+
+**Design Notations**
+- "By relieving the brain of all unnecessary work, a good notation sets it free to concentrate on more advanced problems, and in effect increases the mental power of the race." — A.N. Whitehead (1911)
+
+**Software Development Languages**
+- Different languages are used at different stages
+- Requirements → Design → Coding/Testing
+- English → Diagrams/UML → Java, Python
+- The diagrams/UML are design notations
+
+**UML (Unified Modeling Language)**
+- Industry standard for software design/modeling
+- Different types of UML diagrams are used to represent different aspects of a system (structure, behavior, interactions)
+	- Class diagrams
+	- Activity diagrams
+	- Sequence diagrams
+	- Use case diagrams
+
+**UML Class Diagrams**
+- Used in decomposing a system into modules known as classes
+- Typically used to:
+	- Model domain concepts
+	- Create a detailed, object-oriented design of the code
+![[Informatics_43-1777572488984.webp|500x251]]
+
+Visibility notation:
+- `+` → public visibility
+- `-` → private visibility
+![[Informatics_43-1777572516123.webp|500x260]]
+
+**Translation to Code**
+![[Informatics_43-1777572534036.webp|500x378]]
+
+**Relationships Between Classes**
+- Inheritance
+- Association
+	- Multiplicity
+- Whole-part (aggregation and composition)
+
+**Relationships: Inheritance**
+![[Informatics_43-1777572580106.webp|500x878]]
+
+**Association Relationships**
+![[Informatics_43-1777572596475.webp|500x315]]
+
+**Multiplicity Examples**
+![[Informatics_43-1777572608491.webp|500x330]]
+
+**Relationships: Aggregation**
+- One object contains (or is composed of) a set of other objects
+- Aggregation relationships are transitive and asymmetric
+![[Informatics_43-1777572641802.webp|500x684]]
+
+**Relationships: Composition**
+- A variant of aggregation which adds the property of existence dependency
+![[Informatics_43-1777572669852.webp|500x761]]
+
+**Example: UML Class Diagrams**
+![[Informatics_43-1777572684538.webp|500x280]]
+![[Informatics_43-1777572696970.webp|500x292]]
+![[Informatics_43-1777572704655.webp|500x282]]
+
+**Other UML Diagrams** (besides class diagrams)
+- Activity diagrams
+- Sequence diagrams
+- Use case diagrams
+
+**Example: UML Activity Diagram**
+![[Informatics_43-1777572742117.webp|500x389]]
+
+**Example: UML Sequence Diagram**
+![[Informatics_43-1777572759171.webp|500x359]]
+
+**Example: UML Use Case Diagram**
+![[Informatics_43-1777572770026.webp|500x358]]
+
+**Other Diagrams → User Interface Mockups**
+![[Informatics_43-1777572784885.webp|500x344]]
+![[Informatics_43-1777572801874.webp|500x451]]
+
+**Other Diagrams → Pseudocode**
+![[Informatics_43-1777572822650.webp|500x289]]
+
+**Other Diagrams → Entity Relationship Diagram**
+![[Informatics_43-1777572843782.webp|500x324]]
+
+**Other Diagrams → Architecture Diagrams**
+![[Informatics_43-1777572855403.webp|500x297]]
+
+**Other Diagrams → Storyboard**
+![[Informatics_43-1777572871054.webp|500x383]]
+
+**Other Diagrams → Sketches**
+![[Informatics_43-1777572886021.webp|500x441]]
+
+**What is Software Engineering?**
+- Software engineering is the process of building a set of related models that represent the system-to-be
+
+**Design Principles**
+- High cohesion / low coupling
+- Information hiding
+
+**High Cohesion / Low Coupling**
+- **High cohesion** → grouping related functionality
+- **Low coupling** → ungrouping unrelated functionality / reducing interdependency
+- Effects:
+	- Changes don't propagate
+	- Reuse is facilitated
+![[Informatics_43-1777572985582.webp|500x271]]
+
+**Information Hiding**
+- Hide design decisions that are most likely to change, thereby protecting other parts of the program from change if the design decision is changed
+- "Showing only those details to the outside world which are necessary for the outside world and hiding all other details from the outside world"
+
+**Summary**
+- Every design notation supports an abstraction
+- A design diagram is a statement in a language that has a syntax
+	- UML diagrams, UI mockups, pseudocode, ER diagrams, architecture diagrams, storyboards, sketches
+- Software engineering is the process of building a set of related models that represent the system-to-be
+
+---
+
+## Quiz 5 Study Guide
+
+**Six Approaches to Software Design**
+- **Software architecture** → high-level structure of the system (components, connectors, configurations)
+- **Functional decomposition** → break the system down by functionality, top-down
+- **Relational database design** → break the system down by data and the relationships between data entities
+- **Object-oriented design (UML)** → break the system down by domain entities; each object bundles data and methods, classes are blueprints for objects
+- **User interface design** → drive the design from the user-facing experience and iterate on UI mockups
+- **Sketching** → informal, low-fidelity drawings used to think and communicate early in design
+
+**Purpose of Design**
+- **Think** → designs help you reason about the problem and explore solutions
+- **Talk/communicate** → designs are a shared language for stakeholders, devs, and testers
+- **Prescribe** → designs specify what should be built and how
+
+**Abstraction**
+- Formed by removing irrelevant information and retaining/highlighting relevant information
+- Every design notation supports a certain kind of abstraction
+- Software engineering is all about constructing and elaborating abstractions/models
+
+**UML Class Diagrams**
+- Used to decompose a system into classes, model domain concepts, and produce a detailed OO design
+- Visibility: `+` public, `-` private
+- **Relationships:**
+	- **Inheritance** → "is-a" relationship between subclass and superclass
+	- **Association** → general relationship/link between classes
+		- **Multiplicity** → annotates how many instances participate (e.g., `1`, `0..1`, `1..*`, `*`)
+	- **Aggregation** → whole-part, transitive and asymmetric; parts can exist independently of the whole
+	- **Composition** → stronger aggregation with existence dependency; parts cannot exist without the whole
+
+**Design Principles**
+- **High cohesion** → group related functionality together inside a module
+- **Low coupling** → reduce interdependency between modules
+	- Effects → changes don't propagate, reuse is facilitated
+- **Information hiding** → hide design decisions most likely to change; expose only what the outside world needs
+	- Protects other parts of the program from change when the hidden decision changes
