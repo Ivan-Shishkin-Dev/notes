@@ -40,7 +40,7 @@ University course notes vault organized by academic quarter. The user is a CS st
 
 - User appends raw lecture notes to the end of an existing course file throughout the day
 - At the end of the day, user asks Claude to clean up only the **new** content
-- **Do NOT re-read or reprocess anything above the last checkpoint** — jump straight to the bookmark line, clean from there to EOF, and update the bookmark
+- **Only clean new raw content.** The boundary is visible in the file: cleaned content uses the formatting conventions above (bullets with `-`, `**Bold**` section headers, `→` arrows, proper lecture headings). Raw appended content looks different — typos, run-on lines, inconsistent markers, no clear lecture heading. Find that transition point and clean from there to EOF. Do not reformat content that's already cleaned.
 - Preserve all content and meaning — do not remove personal annotations or humor
 - Fix typos, improve formatting consistency, and consolidate scattered ideas
 - Split content into logical lecture boundaries when multiple topics are present
@@ -55,12 +55,3 @@ After **every** edit to notes in this vault, automatically:
 
 This is pre-authorized — do not ask for confirmation. Run the three commands as the final step of any note-cleaning task.
 
-## Checkpoints (last cleaned line per course)
-
-These track where cleaned notes end in each file. Only process content **after** this point.
-
-| Course | File | Last Cleaned Line | Last Lecture |
-| --- | --- | --- | --- |
-| ICS 51 | `Spring 2026/ICS_51.md` | EOF | Lecture 5: Composite Logic Elements & ALU (Discussion 4: ASCII & Data in Memory now complete) |
-| Informatics 43 | `Spring 2026/Informatics_43.md` | EOF | Lecture 9: How Do We Structure the Software in Detail? (Part 1) |
-| ICS 46 | `Spring 2026/ICS_46.md` | EOF | Lecture 6: Hashing & Hash Tables |
