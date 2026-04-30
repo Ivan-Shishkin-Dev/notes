@@ -46,6 +46,15 @@ University course notes vault organized by academic quarter. The user is a CS st
 - Split content into logical lecture boundaries when multiple topics are present
 - If you notice a way to improve this workflow (save tokens, reduce friction, better formatting), proactively suggest it to the user
 
+## IMPORTANT: Auto-commit and push after every edit
+
+After **every** edit to notes in this vault, automatically:
+1. `git add -A`
+2. `git commit -m "<message describing what was cleaned/changed>"` — be specific (e.g., `"Clean ICS 51 Lecture 6: Sequential logic"`, not `"Update notes"`)
+3. `git push`
+
+This is pre-authorized — do not ask for confirmation. Run the three commands as the final step of any note-cleaning task.
+
 ## Checkpoints (last cleaned line per course)
 
 These track where cleaned notes end in each file. Only process content **after** this point.
