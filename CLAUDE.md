@@ -1,0 +1,57 @@
+# Obsidian Notes Vault
+
+University course notes vault organized by academic quarter. The user is a CS student at UCI.
+
+## Structure
+
+- Root folders are quarters: `Spring 2026/`, `Winter 2026/`
+- Each course is a **single .md file** per class, using underscores in filenames (e.g., `Informatics_43.md`, `ICS_46.md`, `ICS_51.md`)
+- All lectures for a course live in that one file, appended sequentially
+- `Winter 2026/` contains archived zip files from prior quarter courses
+
+## Current Courses (Spring 2026)
+
+- **ICS 46** → Data Structures & Algorithms (C++)
+- **ICS 51** → Computer Architecture (hardware, ISA, x86)
+- **Informatics 43** → Software Engineering (process, requirements, principles)
+
+## Formatting Conventions
+
+- **Lecture headings**: `# Lecture N: Title`
+- **Section headers within lectures**: `**Bold Text**` on its own line for major topics
+- **Sub-sections**: Plain text on its own line, or `##` sparingly for major structural breaks
+- **Content**: Bullet-point heavy, using `-` for lists with tab indentation for nesting
+- **Arrows**: Use `→` for definitions, transitions, and cause/effect
+- **Emphasis**: `**bold**` for key terms, section headers, and summary sections
+- **Code blocks**: Used for code examples (C++ in ICS 46) and ASCII diagrams (ICS 51), with inline comments for instruction counting
+- **Tables**: Markdown tables for reference charts (e.g., Big-O growth rates)
+- **ASCII diagrams**: Used in ICS 51 for hardware diagrams (CPU, data path, memory layout)
+- **Summary blocks**: Some lectures end with a `**Summary**` section using bold bullet headers
+- **Images**: Two embed syntaxes are used — preserve both **exactly** as-is (filenames, UUIDs, size params):
+  - Obsidian wikilink embeds: `![[filename.webp|size]]` or `![[filename.webp|width|widthxheight]]`
+  - Markdown embeds with attachment URIs: `![name|size](attachment:uuid:file)`
+  - When cleaning notes, **never modify, reformat, or remove image embeds**. Keep them in their original position relative to surrounding content. If an image appears between bullet points or paragraphs, leave it there — it was placed intentionally to illustrate the adjacent text.
+- **Tone**: Informal lecture-note style — fragments, shorthand, personal annotations (e.g., "toooo many options", "that I am a dawg"), paraphrased quotes
+- **Cross-course links**: Use Obsidian wikilinks `[[Filename#Heading|display text]]` to connect related concepts across courses. Format: inline with `→` arrows. **Do NOT proactively search other files for connections** — only add a wikilink when (1) the user mentions a cross-course connection in their raw notes, or (2) the connection is obvious from the new content being cleaned without needing to read other files.
+- **Math symbols**: Use actual Unicode symbols instead of spelled-out names → `Σ` (sigma/sum), `Π` (pi/product), `·` (multiplication), `×` (cross multiply), `Ā` (overline for NOT), superscripts (`²`, `⁴`, `ⁿ`), subscripts (`₀`, `₁`, `ₙ`). When raw notes use `*` for multiplication (common in Markdown), use `·` instead.
+- **No YAML frontmatter** on note files
+
+## Workflow
+
+- User appends raw lecture notes to the end of an existing course file throughout the day
+- At the end of the day, user asks Claude to clean up only the **new** content
+- **Do NOT re-read or reprocess anything above the last checkpoint** — jump straight to the bookmark line, clean from there to EOF, and update the bookmark
+- Preserve all content and meaning — do not remove personal annotations or humor
+- Fix typos, improve formatting consistency, and consolidate scattered ideas
+- Split content into logical lecture boundaries when multiple topics are present
+- If you notice a way to improve this workflow (save tokens, reduce friction, better formatting), proactively suggest it to the user
+
+## Checkpoints (last cleaned line per course)
+
+These track where cleaned notes end in each file. Only process content **after** this point.
+
+| Course | File | Last Cleaned Line | Last Lecture |
+| --- | --- | --- | --- |
+| ICS 51 | `Spring 2026/ICS_51.md` | EOF | Lecture 5: Composite Logic Elements & ALU (Discussion 4: ASCII & Data in Memory now complete) |
+| Informatics 43 | `Spring 2026/Informatics_43.md` | EOF | Lecture 9: How Do We Structure the Software in Detail? (Part 1) |
+| ICS 46 | `Spring 2026/ICS_46.md` | EOF | Lecture 6: Hashing & Hash Tables |
