@@ -41,6 +41,7 @@ University course notes vault organized by academic quarter. The user is a CS st
 - User appends raw lecture notes to the end of an existing course file throughout the day
 - At the end of the day, user asks Claude to clean up only the **new** content
 - **Only clean new raw content.** The boundary is visible in the file: cleaned content uses the formatting conventions above (bullets with `-`, `**Bold**` section headers, `→` arrows, proper lecture headings). Raw appended content looks different — typos, run-on lines, inconsistent markers, no clear lecture heading. Find that transition point and clean from there to EOF. Do not reformat content that's already cleaned.
+- **Last-cleaned marker:** Each course file ends with an HTML comment like `<!-- last cleaned: end of Lecture 6 (Perfect Hashing) -->`. This marks the exact point where the previous cleaning session stopped — everything **above** the marker is already cleaned, everything **below** it (and the marker itself) is the new raw content to clean. After cleaning, **delete the old marker and append a new one at the new end of the file** describing what was just finished. If the marker is missing or appears mid-file (user added more raw notes after it), trust the visible formatting boundary instead and reset the marker to the new EOF.
 - Preserve all content and meaning — do not remove personal annotations or humor
 - Fix typos, improve formatting consistency, and consolidate scattered ideas
 - Split content into logical lecture boundaries when multiple topics are present

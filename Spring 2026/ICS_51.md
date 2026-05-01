@@ -1959,3 +1959,6 @@ main:
 - MARS = little-endian → LSB at lowest address
 - Same bits, different meanings — interpretation is decided by the instruction width and signed/unsigned variant, not the data itself
 
+<!-- last cleaned: end of MIPS Memory & Data Segment lecture (Summary block) -->
+
+

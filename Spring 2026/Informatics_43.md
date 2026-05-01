@@ -1421,3 +1421,5 @@ Visibility notation:
 	- Effects → changes don't propagate, reuse is facilitated
 - **Information hiding** → hide design decisions most likely to change; expose only what the outside world needs
 	- Protects other parts of the program from change when the hidden decision changes
+
+<!-- last cleaned: end of Lecture 10 (UML Class Diagrams & Design Principles) -->
