@@ -1319,3 +1319,180 @@ int main() {
     cout << "february  -> " << months["february"]  << endl;
 }
 ```
+
+**STL Example: unordered_map of Months**
+
+```cpp
+#include <iostream>
+#include <string>
+#include <unordered_map>
+int main() {
+    std::unordered_map<std::string, int> months{
+        {"january", 31}, {"february", 28}, {"march", 31},
+        {"april", 30},   {"may", 31},      {"june", 30},
+        {"july", 31},    {"august", 31},   {"september", 30},
+        {"october", 31}, {"november", 30}, {"december", 31}};
+    for (auto [month, days] : months)
+        std::cout << month << " " << days << std::endl;
+}
+// In the structured binding `auto [month, days] : months`,
+// month → pair::first, days → pair::second
+```
+
+- Sample output (Klefstad's run):
+	- december 31, november 30, july 31, may 31, october 31, august 31, april 30, september 30, june 30, february 28, march 31, january 31
+- Order looks scrambled → that's because it's an `unordered_map` (hash table) → no ordering guarantees
+- Want it ordered? → use `std::map` (red-black tree) → keys come out in sorted order
+- This data structure is essentially an **array that you can index with strings** → an *associative array*
+- Both BSTs and hash tables give good performance for this
+
+**Aside: lvalue vs rvalue**
+
+- Named after the **left** and **right** sides of an assignment statement
+- **lvalue** → the memory cell being assigned to (has an address)
+- **rvalue** → the value being assigned from (a temporary/expression)
+
+**Other Asides**
+
+- The words in the homework word list come from a Linux dictionary file (e.g., `/usr/share/dict/words`) → words used by spell checkers
+- **Why only the low 6 bits per char in the hash function?** → For printable ASCII (especially alphanumerics), the upper bits barely change across characters
+	- ASCII is a 7-bit encoding → bit 7 is always 0 for standard ASCII
+	- The high bits within the 7 (bits 5–6) only flip between digit/letter/case ranges, not character-to-character
+	- The actual *distinguishing* information lives in the low bits → e.g., `'a'` (0x61) and `'b'` (0x62) differ only in the low bits
+	- → Discarding the upper bits loses almost no entropy and packs more characters into each 32-bit word
+- **45,392** → the number of word entries in the homework word set
+
+**Homework 5: Hash Table Trade-offs**
+
+What efficiency trade-offs are we exploring?
+
+- **Collision resolution policy?** → could be linear probing, quadratic probing, double hashing, or chaining
+	- We're using **chained hash tables** in this class → already decided, not a variable
+- **Hash function distribution?** → yes, interesting → measure several different hash functions
+	- A poor hash function (sum of ASCII, multiply, etc.) clusters keys into a few slots → long chains, slow finds
+	- A good hash function (uniform distribution) spreads keys evenly → short, balanced chains → near-O(1) finds
+	- We measure this by holding table size constant and swapping in different `Hasher` implementations
+- **Table size effect?** → yes, interesting → measure several table sizes for the same hash function
+	- The **load factor** N/M drives chain length → smaller table → longer chains → slower find/remove
+	- Larger table → shorter chains but more wasted memory
+	- A prime table size avoids modulo-induced bias for non-uniform hashes
+- **How do we compare?** → collect statistics so comparisons are meaningful
+	- Chain length: mean, stddev, min, max, number of empty chains
+	- Operation timings: insert-all (I), find-all (F), remove-all (R)
+
+**Designing a Pluggable Hashing Framework**
+
+- Sketch the hash table class
+- Sketch a `Hasher` class hierarchy → abstract base + many concrete subclasses → swap in/out via polymorphism
+- Sketch the chain implementation with reusable static helpers
+
+**Pluggable Hasher Framework**
+
+```cpp
+struct Hasher {
+    virtual size_t hash(string key, size_t N) = 0;
+    // = 0 → pure virtual function
+    // A class with ≥ 1 pure virtual is an abstract class (cannot instantiate)
+    // A "concrete" class implements every pure virtual it inherits
+};
+
+// Provide 10+ concrete hashers for comparison...
+
+struct SumHasher : public Hasher {  // public inheritance → "is-a" Hasher
+    size_t hash(string key, size_t N) override {
+        // `override` is a keyword (not a reserved word) → identifies intent to
+        // override a base virtual. Compiler errors if no matching virtual exists.
+        // → NOT strictly necessary (the override happens regardless), but it's a
+        // safety net: catches typos in the signature that would silently create
+        // a brand-new function instead of overriding.
+        size_t ret = 0;
+        for (auto c : key)
+            ret += c;
+        return ret % N;
+    }
+};
+```
+
+**HashTable Class**
+
+```cpp
+class HashTable {
+    size_t size;
+    ListNode ** T;            // array of linked-list heads
+    const Hasher & hasher;    // const reference → must be initialized in the
+                              // member-initializer list (refs cannot be reseated)
+public:
+    HashTable(const Hasher & h, size_t cap);
+    void insert(string key);
+    bool find(string key);
+    void remove(string key);
+    Stats get_statistics();
+};
+// Compare: STL's unordered_map<KType, VType> stores key/value pairs
+```
+
+**ListNode and Static Helpers**
+
+```cpp
+struct ListNode {
+    string data;             // could be std::pair<KType, VType>
+    ListNode * next;
+    static ListNode * insert(string key, ListNode * L);
+    static ListNode * find(string key, ListNode * L);
+    static ListNode * remove(string key, ListNode * L);
+    static void delete_list(ListNode * L);
+};
+// Same pattern as our unordered linked list helpers from earlier
+```
+
+**Measured Results: STLHasher at Varying Table Sizes**
+
+All runs use 45,392 dictionary entries with the STL hash function. I = insert-all time, F = find-all time, R = remove-all time (seconds).
+
+| Chains (M) | Load N/M | Min chain | Max chain | I (s) | F (s) | R (s) |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1000 | 45.4 | 21 | 64 | 0.0350 | 0.1012 | 0.1121 |
+| 100 | 453.9 | 399 | 520 | 0.0342 | 0.6295 | 0.6913 |
+| 10 | 4539.2 | 4469 | 4668 | 0.0340 | 5.4639 | 6.2930 |
+| 1 | 45392 | 45392 | 45392 | 0.0339 | 49.38 | 60.93 |
+
+- **Insert times are flat** → chained insert is O(1) per insert regardless of chain length (we prepend at head) → table size doesn't affect it
+- **Find/remove scale with chain length** → both must walk the chain → degrade linearly as M shrinks
+- At M = 1, the hash table degenerates into a single linked list → find-all is O(N²), confirming the ~50s vs ~0.1s blow-up
+- **Why does the gap between min and max chain shrink as M increases?** → with a good hash function, chain lengths follow roughly a Poisson distribution
+	- Larger M → smaller load factor → expected chain length is small → absolute spread (max − min) is small
+	- Smaller M → bigger expected chain length → same *relative* variance produces a much larger absolute spread
+	- A *bad* hash function would show big min/max gaps even at large M because keys cluster into a few slots while others stay empty
+
+**Coding the Hash Table**
+
+```cpp
+class HashTable {
+    size_t size;
+    ListNode ** T;
+    const Hasher & hasher;   // size_t hash(string key, size_t N)
+};
+```
+
+Activities:
+- Write the constructor → `HashTable(const Hasher & h, size_t cap)`
+- Write `void HashTable::insert(string key);`
+- Write `bool HashTable::find(string key);`
+- Write `void HashTable::remove(string key);`
+
+```cpp
+void HashTable::insert(string key) {
+    size_t h = hasher.hash(key, size);
+    T[h] = ListNode::insert(key, T[h]);
+}
+```
+
+**Perfect Hashing**
+
+- When the set of keys is **known beforehand** (e.g., the reserved words of C++)
+- We can construct a function that guarantees **no collisions** → a *Perfect Hash Function* → [wiki](https://en.wikipedia.org/wiki/Perfect_hash_function)
+- May require **more than N slots** in the table
+- A *Minimal Perfect Hash Function* uses **exactly N slots** → [wiki](https://en.wikipedia.org/wiki/Perfect_hash_function#Minimal_perfect_hash_function)
+- Not appropriate for a general-purpose hash table → only works when the key set is fixed and known up front
+
+<!-- last cleaned: end of Lecture 6 (Perfect Hashing) -->
