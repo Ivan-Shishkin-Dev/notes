@@ -2001,8 +2001,6 @@ Pattern → heavy on the left? Rotate right. Heavy on the right? Rotate left. Zi
 - So `F(i) ≈ φⁱ / √5`, which gives `N(h) = F(h+2)/√5 − 1`
 - Solving for h → **h ≈ 1.44 · log₂(N)**
 
-![[ICS_46-1777938213033.webp|500x175]]
-
 The takeaway from the derivation (don't memorize the algebra):
 - Height of an AVL tree is bounded by a constant (1.44) times log₂N
 - Therefore `get`, `put`, `del` are all **O(log N)** worst case → this is the whole point of AVL
@@ -2066,7 +2064,14 @@ int updateBalance(TreeNode *node){
 
 **Left Rotation**
 
-![[ICS_46-1777938412562.webp|500x268]]
+Concrete example — right-leaning chain becomes balanced:
+```
+   A(-2)                B(0)
+    \                  / \
+     B(-1)    →     A(0)  C(0)
+      \
+       C(0)
+```
 
 Steps for left rotation (around node A, where A's right child B becomes the new root):
 1. Promote the right child (B) to the subtree's root
@@ -2075,7 +2080,16 @@ Steps for left rotation (around node A, where A's right child B becomes the new 
 
 **Right Rotation**
 
-![[ICS_46-1777938472727.webp|500x261]]
+Concrete example — left-leaning tree becomes balanced:
+```
+        E(2)                  C(0)
+       /  \                  /   \
+     C(1)  F(0)    →       B(1)   E(0)
+     / \                   /      / \
+   B(1) D(0)             A(0)  D(0) F(0)
+   /
+  A(0)
+```
 
 Steps for right rotation (around node E, where E's left child C becomes the new root):
 1. Promote the left child (C) to the subtree's root
@@ -2110,8 +2124,16 @@ void rotateLeft(TreeNode *rotRoot){
 
 **Updating Balance Factors After a Rotation**
 
-![[ICS_46-1777938506751.webp|500x211]]
-![[ICS_46-1777938535574.webp|500x513]]
+Setup for the derivation — generic left rotation around B with subtrees A, C, E (D is B's right child):
+```
+     B                    D
+    / \                  / \
+   A   D       →        B   E
+      / \              / \
+     C   E            A   C
+```
+
+Let h_x denote the height of subtree rooted at x. The other subtrees' heights (h_A, h_C, h_E) don't change during the rotation, only the BFs of B and D do.
 
 You don't need to recompute heights after a rotation — there's a clean formula. The derivation (B = old root = `rotRoot`, D = new root = `newRoot`):
 
@@ -2128,9 +2150,25 @@ Right rotation gives a symmetric formula → left as exercise.
 
 **The Zigzag Problem (When One Rotation Isn't Enough)**
 
-![[ICS_46-1777938582376.webp|500x462]]
+Tree has BF = −2 at A, but A's right child C is itself **left-heavy** (BF = +1). The shape is a zigzag, not a straight line:
+```
+   A(-2)
+    \
+     C(1)
+    /
+   B(0)
+```
 
-The picture: tree has BF = −2 at A, but A's right child has BF = +1 (left-heavy). A single left rotation around A doesn't fix it — it produces a tree with BF = +2 at the new root, just unbalanced the other way. Doing a right rotation back gets you exactly where you started → infinite loop.
+A single left rotation around A doesn't fix it — it just unbalances the other way:
+```
+       C(2)
+      /
+     A(-1)
+      \
+       B(0)
+```
+
+Doing a right rotation back gets you exactly where you started → infinite loop.
 
 The fix → **rotation rules**:
 - Subtree needs a **left rotation**? First check the right child's BF. If right child is **left-heavy** → right-rotate the right child first, then left-rotate the original.
@@ -2138,10 +2176,15 @@ The fix → **rotation rules**:
 
 Translation: if the bad shape is a zigzag (LR or RL), straighten the child into a line first, *then* do the outer rotation.
 
-![[ICS_46-1777938616324.webp|500x307]]
-
-Worked sequence (the picture): start with A(−2) → C(1) → B(0).
-1. Right-rotate around C → tree is now A(−2) → B(−1) → C(0), now a straight line
+Worked sequence — start with the zigzag, end balanced:
+```
+  A(-2)            A(-2)              B(0)
+   \                \                / \
+    C(1)    →        B(-1)    →   A(0) C(0)
+   /                  \
+  B(0)                 C(0)
+```
+1. Right-rotate around C → tree is now A(−2) → B(−1) → C(0), a straight line
 2. Left-rotate around A → balanced tree B(0) with children A(0) and C(0)
 
 ```cpp
@@ -2169,8 +2212,6 @@ void rebalance(TreeNode *node){
 
 **Cost Summary for AVL**
 
-![[ICS_46-1777938646072.webp|500x158]]
-
 - `get` → O(log N) since tree height is bounded
 - `put` cost breakdown:
 	- Walk down to the leaf → O(log N)
@@ -2181,8 +2222,6 @@ void rebalance(TreeNode *node){
 - Deletion is also O(log N), but the textbook leaves implementation as an exercise
 
 **Map ADT — Comparison of All Implementations**
-
-![[ICS_46-1777938684810.webp|500x271]]
 
 | operation | Sorted Array | Hash Table | BST  | AVL Tree |
 | --------- | ------------ | ---------- | ---- | -------- |
