@@ -1495,4 +1495,706 @@ void HashTable::insert(string key) {
 - A *Minimal Perfect Hash Function* uses **exactly N slots** → [wiki](https://en.wikipedia.org/wiki/Perfect_hash_function#Minimal_perfect_hash_function)
 - Not appropriate for a general-purpose hash table → only works when the key set is fixed and known up front
 
-<!-- last cleaned: end of Lecture 6 (Perfect Hashing) -->
+# Lecture 7: Binary Trees & Binary Search Trees
+
+**Tree Traversals**
+
+Three standard ways to walk a binary tree, defined by *where the root is visited relative to its subtrees*.
+
+- **Pre-order** → Root → Left → Right (root comes PRE/before)
+- **In-order** → Left → Root → Right (root comes IN the middle)
+- **Post-order** → Left → Right → Root (root comes POST/after)
+
+External vs. internal style
+- Traversals can be written as a free function taking a tree, or as a method on the tree class
+- External version is usually cleaner → base case is just "is the tree null?"
+- Internal version has to check each child before recursing
+- Most of the time you don't *just* traverse — you do something during the walk → external functions compose better with whatever real work you're doing
+
+
+Pre-order (external function)
+```cpp
+void preorder(BinaryTree *tree){
+    if (tree){
+        cout << tree->getRootVal() << endl;
+        preorder(tree->getLeftChild());
+        preorder(tree->getRightChild());
+    }
+}
+```
+
+Pre-order (internal method)
+```cpp
+void preorder(){
+    cout << this->key << endl;
+    if (this->leftChild){
+        this->leftChild->preorder();
+    }
+    if (this->rightChild){
+        this->rightChild->preorder();
+    }
+}
+```
+
+In-order
+```cpp
+void inorder(BinaryTree *tree){
+    if (tree != NULL){
+        inorder(tree->getLeftChild());
+        cout << tree->getRootVal();
+        inorder(tree->getRightChild());
+    }
+}
+```
+
+Post-order
+```cpp
+void postorder(BinaryTree *tree){
+    if (tree != NULL){
+        postorder(tree->getLeftChild());
+        postorder(tree->getRightChild());
+        cout << tree->getRootVal() << endl;
+    }
+}
+```
+
+**Binary Search Tree — ADT**
+
+Operations a BST should support (Map ADT):
+- `BinarySearchTree()` → create new empty tree
+- `put(key, val)` → insert new pair, or replace value if key already exists
+- `get(key)` → return value for key, or `NULL`
+- `del(key)` → remove the key-value pair
+- `length()` → number of pairs stored
+
+**BST Property**
+
+- For every node → keys in left subtree < node's key < keys in right subtree
+- Implementation uses two classes:
+	- `BinarySearchTree` → outer wrapper, holds a pointer to the root, handles empty-tree edge cases
+	- `TreeNode` → the actual node, stores key/payload/parent/leftChild/rightChild
+- Every node also tracks its parent → important for `del`
+- Q: How many children can a node have in a BST? → at most 2
+
+```cpp
+class BinarySearchTree{
+    private:
+        TreeNode *root;
+        int size;
+
+    public:
+        BinarySearchTree(){
+            this->root = NULL;
+            this->size = 0;
+        }
+
+        int length(){
+            return this->size;
+        }
+}
+```
+
+**TreeNode class**
+
+- Optional default parameters → can construct a node with or without parent/children
+- Helper methods classify the node by its position (root, leaf, left child, right child) and by which children it has
+
+```cpp
+class TreeNode{
+    public:
+        int key;
+        string payload;
+        TreeNode *leftChild;
+        TreeNode *rightChild;
+        TreeNode *parent;
+
+        TreeNode(int key, string val, TreeNode *parent = NULL, TreeNode *left = NULL, TreeNode *right = NULL){
+            this->key = key;
+            this->payload = val;
+            this->leftChild = left;
+            this->rightChild = right;
+            this->parent = parent;
+        }
+
+        TreeNode *hasLeftChild(){ return this->leftChild; }
+        TreeNode *hasRightChild(){ return this->rightChild; }
+        bool isLeftChild(){ return this->parent && this->parent->leftChild == this; }
+        bool isRightChild(){ return this->parent && this->parent->rightChild == this; }
+        bool isRoot(){ return !this->parent; }
+        bool isLeaf(){ return !(this->rightChild || this->leftChild); }
+        bool hasAnyChildren(){ return this->rightChild || this->leftChild; }
+        bool hasBothChildren(){ return this->rightChild && this->leftChild; }
+
+        void replaceNodeData(int key, string value, TreeNode *lc = NULL, TreeNode *rc = NULL){
+            this->key = key;
+            this->payload = value;
+            this->leftChild = lc;
+            this->rightChild = rc;
+            if (this->hasLeftChild()){
+                this->leftChild->parent = this;
+            }
+            if (this->hasRightChild()){
+                this->rightChild->parent = this;
+            }
+        }
+    }
+```
+
+**Put**
+
+- If tree is empty → new node becomes the root
+- Otherwise → recurse with helper `_put` comparing keys:
+	- new key < current → go left
+	- new key > current → go right
+	- when the chosen child slot is empty → drop the new node there, set its parent to the current node
+- Bug in this version → duplicate keys create a second node in the right subtree (and the duplicate is unreachable on search). Better behavior: replace old payload with new
+
+```cpp
+void put(int key, string val){
+    if (this->root){
+        this->_put(key, val, this->root);
+    }
+    else{
+        this->root = new TreeNode(key, val);
+    }
+    this->size = this->size + 1;
+}
+
+void _put(int key, string val, TreeNode *currentNode){
+    if (key < currentNode->key){
+        if (currentNode->hasLeftChild()){
+            this->_put(key, val, currentNode->leftChild);
+        }
+        else{
+            currentNode->leftChild = new TreeNode(key, val, currentNode);
+        }
+    }
+    else{
+        if (currentNode->hasRightChild()){
+            this->_put(key, val, currentNode->rightChild);
+        }
+        else{
+            currentNode->rightChild = new TreeNode(key, val, currentNode);
+        }
+    }
+}
+```
+
+**Get**
+
+- Recurse using the same left/right comparison logic as `_put`
+- `_get` returns the whole `TreeNode *` so callers can use it for more than just payload lookup
+
+```cpp
+string get(int key){
+    if (this->root){
+        TreeNode *res = this->_get(key, this->root);
+        if (res){
+            return res->payload;
+        }
+        else{
+            return 0;
+        }
+    }
+    else{
+        return 0;
+    }
+}
+
+TreeNode *_get(int key, TreeNode *currentNode){
+    if (!currentNode){
+        return NULL;
+    }
+    else if (currentNode->key == key){
+        return currentNode;
+    }
+    else if (key < currentNode->key){
+        return this->_get(key, currentNode->leftChild);
+    }
+    else{
+        return this->_get(key, currentNode->rightChild);
+    }
+}
+```
+
+**Delete**
+
+The hard one. Three cases depending on how many children the target node has.
+
+`del(key)` overall flow:
+- size > 1 → search with `_get`, then call `remove` on the found node
+- size == 1 and root key matches → just null out root
+- otherwise → key not in tree, error
+
+```cpp
+void del(int key){
+    if (this->size > 1){
+        TreeNode *nodeToRemove = this->_get(key, this->root);
+        if (nodeToRemove){
+            this->remove(nodeToRemove);
+            this->size = this->size - 1;
+        }
+        else{
+            cerr << "Error, key not in tree" << endl;
+        }
+    }
+    else if (this->size == 1 && this->root->key == key){
+        this->root = NULL;
+        this->size = this->size - 1;
+    }
+    else{
+        cerr << "Error, key not in tree" << endl;
+    }
+}
+```
+
+Case 1 — Node is a leaf (no children) → just null out the parent's pointer to it
+```cpp
+if (currentNode->isLeaf()){
+    if (currentNode == currentNode->parent->leftChild){
+        currentNode->parent->leftChild = NULL;
+    }
+    else{
+        currentNode->parent->rightChild = NULL;
+    }
+}
+```
+
+Case 2 — Node has exactly one child → promote that child into the node's spot
+- Symmetric across left/right child and parent side, so 6 sub-cases total
+- If node is a left child → parent's left now points at the grandchild
+- If node is a right child → parent's right now points at the grandchild
+- If node is the root → can't change a parent pointer, instead overwrite the node in place using `replaceNodeData` with the child's data
+
+```cpp
+else{ // this node has one child
+    if (currentNode->hasLeftChild()){
+        if (currentNode->isLeftChild()){
+            currentNode->leftChild->parent = currentNode->parent;
+            currentNode->parent->leftChild = currentNode->leftChild;
+        }
+        else if (currentNode->isRightChild()){
+            currentNode->leftChild->parent = currentNode->parent;
+            currentNode->parent->rightChild = currentNode->leftChild;
+        }
+        else{
+            currentNode->replaceNodeData(currentNode->leftChild->key,
+                                         currentNode->leftChild->payload,
+                                         currentNode->leftChild->leftChild,
+                                         currentNode->leftChild->rightChild);
+        }
+    }
+    else{
+        if (currentNode->isLeftChild()){
+            currentNode->rightChild->parent = currentNode->parent;
+            currentNode->parent->leftChild = currentNode->rightChild;
+        }
+        else if (currentNode->isRightChild()){
+            currentNode->rightChild->parent = currentNode->parent;
+            currentNode->parent->rightChild = currentNode->rightChild;
+        }
+        else{
+            currentNode->replaceNodeData(currentNode->rightChild->key,
+                                         currentNode->rightChild->payload,
+                                         currentNode->rightChild->leftChild,
+                                         currentNode->rightChild->rightChild);
+        }
+    }
+}
+```
+
+Case 3 — Node has two children → can't just promote one
+- Find the **successor** = the next-largest key in the tree → guaranteed to have at most one child
+- Splice the successor out of its current spot (using the easier 1- or 0-child cases above)
+- Copy successor's key/payload into the node we wanted to delete
+- Use `spliceOut` directly instead of recursing into `del` → avoids re-searching for the key
+
+```cpp
+else if (currentNode->hasBothChildren()){
+    TreeNode *succ = currentNode->findSuccessor();
+    succ->spliceOut();
+    currentNode->key = succ->key;
+    currentNode->payload = succ->payload;
+}
+```
+
+Finding the successor — three sub-cases:
+- Node has a right child → successor is the **min of the right subtree**
+- Node has no right child and is a left child → successor is its parent
+- Node has no right child and is a right child → walk up until you find an ancestor where you came from the left, that ancestor is the successor
+
+`findMin` → just walk left children until there are no more.
+
+```cpp
+TreeNode *findSuccessor(){
+    TreeNode *succ = NULL;
+    if (this->hasRightChild()){
+        succ = this->rightChild->findMin();
+    }
+    else{
+        if (this->parent){
+            if (this->isLeftChild()){
+                succ = this->parent;
+            }
+            else{
+                this->parent->rightChild = NULL;
+                succ = this->parent->findSuccessor();
+                this->parent->rightChild = this;
+            }
+        }
+    }
+    return succ;
+}
+
+TreeNode *findMin(){
+    TreeNode *current = this;
+    while (current->hasLeftChild()){
+        current = current->leftChild;
+    }
+    return current;
+}
+
+void spliceOut(){
+    if (this->isLeaf()){
+        if (this->isLeftChild()){
+            this->parent->leftChild = NULL;
+        }
+        else{
+            this->parent->rightChild = NULL;
+        }
+    }
+    else if (this->hasAnyChildren()){
+        if (this->hasLeftChild()){
+            if (this->isLeftChild()){
+                this->parent->leftChild = this->leftChild;
+            }
+            else{
+                this->parent->rightChild = this->rightChild;
+            }
+            this->leftChild->parent = this->parent;
+        }
+        else{
+            if (this->isLeftChild()){
+                this->parent->leftChild = this->rightChild;
+            }
+            else{
+                this->parent->rightChild = this->rightChild;
+            }
+            this->rightChild->parent = this->parent;
+        }
+    }
+}
+```
+
+**In-order Iterator**
+
+- Iterating a BST in order should yield sorted keys → it's basically an in-order traversal that pauses between values
+- Python's `yield` makes this elegant → freezes function state, resumes on next call. The traversal is recursive over `TreeNode` instances, so `__iter__` lives on the node class
+- (Below is Python-style pseudocode for the iterator — C++ would use a stack or coroutine to do the same)
+
+```cpp
+def __iter__(self):
+    if self:
+        if self.hasLeftChild():
+                for elem in self.leftChiLd:
+                    yield elem
+        yield self.key
+        if self.hasRightChild():
+                for elem in self.rightChild:
+                    yield elem
+```
+
+**Search Tree Analysis**
+
+- Cost of `put` → proportional to tree height
+	- Random insertion order → height ≈ log₂N
+	- Perfectly balanced tree → N = 2^(h+1) − 1 → height = log₂N
+	- Worst case (sorted insertion) → tree degenerates into a singly linked list → height = N → `put` becomes O(N)
+- `get`, `in`, `del` → all bounded by tree height for the same reason
+	- `del` looks scarier because it needs to find the successor, but successor lookup is also bounded by height → just doubles the work, constant factor, doesn't change worst case
+
+**Conclusion** → BST operations are O(log N) on average for randomly-built trees, but worst-case O(N) when the tree degenerates. This motivates **self-balancing trees** (next: AVL).
+
+# Lecture 8: AVL Trees
+
+**Motivation**
+
+- Plain BSTs degenerate to O(N) when keys arrive in sorted order
+- An **AVL tree** is a self-balancing BST → keeps height ≈ log N at all times by checking balance after every insert and rotating as needed
+- Named after inventors **Adelson-Velskii and Landis**
+
+**Balance Factor**
+
+- For every node: `balanceFactor = height(leftSubtree) − height(rightSubtree)`
+- Valid range in an AVL tree → `−1, 0, +1`
+- Outside that range (`±2`) → tree is out of balance, must rotate
+- `+1` → left-heavy by one
+- `0` → perfectly balanced
+- `−1` → right-heavy by one
+
+```
+        5 (0)         ← balanced, both sides equal height
+       / \
+   (1)3   8 (-1)      ← left heavy by 1, right heavy by 1
+     /     \
+    1       9
+```
+
+**Four Rotation Cases**
+
+Look at the unbalanced node, then trace down toward the inserted/problem node. The path gives one of four shape patterns: **LL, RR, LR, RL**.
+
+Rule of thumb → the **middle-valued node** becomes the new root.
+
+Single rotations (same letters → straight line shape)
+
+LL case → rotate right
+```
+    z              y
+   /              / \
+  y       →      x   z
+ /
+x
+```
+
+RR case → rotate left
+```
+z                  y
+ \                / \
+  y       →      z   x
+   \
+    x
+```
+
+Double rotations (mixed letters → zigzag shape)
+
+LR case → left-rotate the child, then right-rotate the root
+```
+  z          z              x
+ /          /              / \
+y     →    x       →      y   z
+ \        /
+  x      y
+```
+
+RL case → right-rotate the child, then left-rotate the root
+```
+z          z                 x
+ \          \               / \
+  y   →      x       →     z   y
+ /            \
+x              y
+```
+
+Mnemonic
+```
+Same letters  (LL, RR) → 1 rotation,  opposite direction
+Mixed letters (LR, RL) → 2 rotations, straighten child first
+```
+
+Pattern → heavy on the left? Rotate right. Heavy on the right? Rotate left. Zigzag? Can't fix in one rotation, un-zigzag the child first so it becomes a straight line, then do the single rotation.
+
+**AVL Tree Performance**
+
+- Minimum number of nodes in an AVL tree of height h → `N(h) = 1 + N(h−1) + N(h−2)`
+- This is the Fibonacci recurrence → as i grows, `F(i)/F(i−1) → φ` (golden ratio = (1 + √5) / 2)
+- So `F(i) ≈ φⁱ / √5`, which gives `N(h) = F(h+2)/√5 − 1`
+- Solving for h → **h ≈ 1.44 · log₂(N)**
+
+![[ICS_46-1777938213033.webp|500x175]]
+
+The takeaway from the derivation (don't memorize the algebra):
+- Height of an AVL tree is bounded by a constant (1.44) times log₂N
+- Therefore `get`, `put`, `del` are all **O(log N)** worst case → this is the whole point of AVL
+
+**AVL Tree — Insertion**
+
+- New keys always insert as leaves → new leaf has balance factor 0, fine on its own
+- Inserting changes the parent's balance factor:
+	- new node was a left child → parent's BF goes up by 1
+	- new node was a right child → parent's BF goes down by 1
+- Recurse this update up toward the root. Two base cases stop the recursion:
+	- We reached the root
+	- A subtree's BF became 0 → subtree's height didn't change → ancestors' BFs are unaffected, stop
+
+Implement AVL as a subclass of BST. `_put` is the same, except after creating a new leaf you call `updateBalance` on it.
+
+```cpp
+void _put(int key, string val, TreeNode *currentNode){
+    if (key < currentNode->key){
+        if (currentNode->hasLeftChild()){
+            this->_put(key, val, currentNode->leftChild);
+        }
+        else{
+            currentNode->leftChild = new TreeNode(key, val, currentNode);
+            this->updateBalance(currentNode->leftChild);
+        }
+    }
+    else{
+        if (currentNode->hasRightChild()){
+            this->_put(key, val, currentNode->rightChild);
+        }
+        else{
+            currentNode->rightChild = new TreeNode(key, val, currentNode);
+            this->updateBalance(currentNode->rightChild);
+        }
+    }
+}
+```
+
+```cpp
+int updateBalance(TreeNode *node){
+    if (node->balanceFactor > 1 || node->balanceFactor < -1){
+        this->rebalance(node);
+        return 0;
+    }
+    if (node->parent != NULL){
+        if (node->isLeftChild()){
+            node->parent->balanceFactor += 1;
+        }
+        else if (node->isRightChild()){
+            node->parent->balanceFactor -= 1;
+        }
+        if (node->parent->balanceFactor != 0){
+            this->updateBalance(node->parent);
+        }
+    }
+}
+```
+
+`updateBalance` either rebalances and stops, or bumps the parent's BF and recurses up. Once we hit BF = 0, subtree height didn't change → done.
+
+**Left Rotation**
+
+![[ICS_46-1777938412562.webp|500x268]]
+
+Steps for left rotation (around node A, where A's right child B becomes the new root):
+1. Promote the right child (B) to the subtree's root
+2. Move old root (A) to be B's left child
+3. If B already had a left child, that subtree becomes A's new right child (A's old right slot is now free since B used to live there)
+
+**Right Rotation**
+
+![[ICS_46-1777938472727.webp|500x261]]
+
+Steps for right rotation (around node E, where E's left child C becomes the new root):
+1. Promote the left child (C) to the subtree's root
+2. Move old root (E) to be C's right child
+3. If C already had a right child (D), that subtree becomes E's new left child
+
+```cpp
+void rotateLeft(TreeNode *rotRoot){
+    TreeNode *newRoot = rotRoot->rightChild;
+    rotRoot->rightChild = newRoot->leftChild;
+    if (newRoot->leftChild != NULL){
+        newRoot->leftChild->parent = rotRoot;
+    }
+    newRoot->parent = rotRoot->parent;
+    if (rotRoot->isRoot()){
+        this->root = newRoot;
+    }
+    else{
+        if (rotRoot->isLeftChild()){
+            rotRoot->parent->leftChild = newRoot;
+        }
+        else{
+            rotRoot->parent->rightChild = newRoot;
+        }
+    }
+    newRoot->leftChild = rotRoot;
+    rotRoot->parent = newRoot;
+    rotRoot->balanceFactor = rotRoot->balanceFactor + 1 - min(newRoot->balanceFactor, 0);
+    newRoot->balanceFactor = newRoot->balanceFactor + 1 + max(rotRoot->balanceFactor, 0);
+}
+```
+
+**Updating Balance Factors After a Rotation**
+
+![[ICS_46-1777938506751.webp|500x211]]
+![[ICS_46-1777938535574.webp|500x513]]
+
+You don't need to recompute heights after a rotation — there's a clean formula. The derivation (B = old root = `rotRoot`, D = new root = `newRoot`):
+
+- `newBal(B) = oldBal(B) + 1 − min(0, oldBal(D))`
+- `newBal(D) = oldBal(D) + 1 + max(0, newBal(B))`
+
+That's where these two lines in `rotateLeft` come from:
+```cpp
+rotRoot->balanceFactor = rotRoot->balanceFactor + 1 - min(newRoot->balanceFactor, 0);
+newRoot->balanceFactor = newRoot->balanceFactor + 1 + max(rotRoot->balanceFactor, 0);
+```
+
+Right rotation gives a symmetric formula → left as exercise.
+
+**The Zigzag Problem (When One Rotation Isn't Enough)**
+
+![[ICS_46-1777938582376.webp|500x462]]
+
+The picture: tree has BF = −2 at A, but A's right child has BF = +1 (left-heavy). A single left rotation around A doesn't fix it — it produces a tree with BF = +2 at the new root, just unbalanced the other way. Doing a right rotation back gets you exactly where you started → infinite loop.
+
+The fix → **rotation rules**:
+- Subtree needs a **left rotation**? First check the right child's BF. If right child is **left-heavy** → right-rotate the right child first, then left-rotate the original.
+- Subtree needs a **right rotation**? First check the left child's BF. If left child is **right-heavy** → left-rotate the left child first, then right-rotate the original.
+
+Translation: if the bad shape is a zigzag (LR or RL), straighten the child into a line first, *then* do the outer rotation.
+
+![[ICS_46-1777938616324.webp|500x307]]
+
+Worked sequence (the picture): start with A(−2) → C(1) → B(0).
+1. Right-rotate around C → tree is now A(−2) → B(−1) → C(0), now a straight line
+2. Left-rotate around A → balanced tree B(0) with children A(0) and C(0)
+
+```cpp
+void rebalance(TreeNode *node){
+    if (node->balanceFactor < 0){
+        if (node->rightChild->balanceFactor > 0){
+            this->rotateRight(node->rightChild);
+            this->rotateLeft(node);
+        }
+        else{
+            this->rotateLeft(node);
+        }
+    }
+    else if (node->balanceFactor > 0){
+        if (node->leftChild->balanceFactor < 0){
+            this->rotateLeft(node->leftChild);
+            this->rotateRight(node);
+        }
+        else {
+            this->rotateRight(node);
+        }
+    }
+}
+```
+
+**Cost Summary for AVL**
+
+![[ICS_46-1777938646072.webp|500x158]]
+
+- `get` → O(log N) since tree height is bounded
+- `put` cost breakdown:
+	- Walk down to the leaf → O(log N)
+	- Update balance factors back up the tree → at most one update per level → O(log N)
+	- If a subtree is out of balance → at most 2 rotations to fix it
+	- Each rotation is O(1)
+	- Total → still **O(log N)**
+- Deletion is also O(log N), but the textbook leaves implementation as an exercise
+
+**Map ADT — Comparison of All Implementations**
+
+![[ICS_46-1777938684810.webp|500x271]]
+
+| operation | Sorted Array | Hash Table | BST  | AVL Tree |
+| --------- | ------------ | ---------- | ---- | -------- |
+| put       | O(N)         | O(1)       | O(N) | O(log N) |
+| get       | O(log N)     | O(1)       | O(N) | O(log N) |
+| in        | O(log N)     | O(1)       | O(N) | O(log N) |
+| del       | O(N)         | O(1)       | O(N) | O(log N) |
+
+Reading the table:
+- Hash table is unbeatable on average → but no order, worst case can be O(N) on bad hashes
+- Sorted array is fast for lookup but slow for insertion/deletion (shifting)
+- Plain BST is O(N) worst case → only good if you trust the input distribution
+- AVL gives **guaranteed O(log N)** on every operation → the safe choice when you also want ordered iteration
+
+<!-- last cleaned: end of Lecture 8 (AVL Trees) -->
