@@ -1146,6 +1146,7 @@ bool balanced(const string& s) {
 	- **Search List** → linked list where find is O(N) and insert is O(1) → bad since find is the most common operation
 	- **Hash Table** → in a perfect environment, find/insert/remove are all O(1), but no guarantees
 		- Can degenerate → need to know what causes that and how to fix it
+		- bad hash function (doesn't cover full span of indicies or excessive collisions) and small enough
 	- **Binary Search Tree** → O(log N) for all operations on average
 		- Worst case is O(N) when the tree degenerates into a singly linked list (inserts in sorted order, no self-balancing) → balanced BSTs (AVL, Red-Black) guarantee O(log N)
 - Operations: insert, find, remove
@@ -2236,4 +2237,419 @@ Reading the table:
 - Plain BST is O(N) worst case → only good if you trust the input distribution
 - AVL gives **guaranteed O(log N)** on every operation → the safe choice when you also want ordered iteration
 
-<!-- last cleaned: end of Lecture 8 (AVL Trees) -->
+# Lecture 9: BST Implementation Deep Dive & AVL Code
+
+**Binary Search Tree — Recap**
+
+- A type of table/dictionary (like a hash table) → store a `value` in a node associated with a `key`
+- Each node has up to two child nodes → one left child, one right child
+- BST ordering invariant:
+	- All left descendants have **smaller** key values
+	- All right descendants have **larger** key values
+- Leaf node → node with no children
+- Height of tree → longest path from root to leaf
+
+Example tree:
+```
+        4
+       / \
+      1   6
+         / \
+        5   7
+```
+
+**Search Algorithm**
+
+1. Start at the root
+2. If the value equals the current node → found
+3. If the value is less than the current node → move to its left child
+4. If the value is greater → move to its right child
+5. Repeat until either we find the node or we reach the bottom of the tree (`nullptr`)
+6. If we reach the bottom → tree doesn't contain the value
+
+Walking through "search for 5" on the tree above:
+- Start at root → `4`
+- `5 > 4` → look at right child → `6`
+- `5 < 6` → look at left child → `5`
+- Found it!
+
+- As soon as you put "search" in **binary search tree**, every key must follow the convention → left is smaller, right is larger
+
+**Tree Node Implementation**
+
+```cpp
+template <typename KeyType, typename ValueType>
+struct TreeNode {
+    KeyType key;
+    ValueType value;
+    TreeNode * left;
+    TreeNode * right;
+
+    TreeNode(KeyType new_key, ValueType new_value,
+             TreeNode * l, TreeNode * r);
+
+    // Static helpers
+    static TreeNode * insert(KeyType key, ValueType value, TreeNode * t);
+    static TreeNode * find(KeyType key, TreeNode * t);
+    static TreeNode * remove(KeyType key, TreeNode * t);
+    static void print(ostream & out, TreeNode * t);
+    static void delete_tree(TreeNode * t);
+};
+```
+
+**Inserting a Node**
+
+- Find where to place the new node → use the same algorithm as search
+- Two possible outcomes:
+	- Key is already in the tree → simply replace old value with new
+	- Walk falls off the tree (key not present) → attach a new leaf
+		- If key is less than parent → add to left side
+		- If key is greater than parent → add to right side
+
+Iterative `TreeNode::insert`
+```cpp
+TreeNode * insert(TreeNode * root, KeyType key, ValueType value) {
+    if (root == nullptr)
+        return new TreeNode(key, value, nullptr, nullptr);  // empty base case
+
+    TreeNode * t = root;
+    while (t->key != key) {
+        if (key < t->key) {
+            if (t->left == nullptr)
+                t->left = new TreeNode(key, value, nullptr, nullptr);
+            t = t->left;
+        }
+        else if (key > t->key) {
+            if (t->right == nullptr)
+                t->right = new TreeNode(key, value, nullptr, nullptr);
+            t = t->right;
+        }
+    }
+    t->value = value;  // overwrite if key already existed
+    return root;
+}
+```
+
+Recursive `TreeNode::insert`
+```cpp
+TreeNode * insert(KeyType key, ValueType value, TreeNode * t) {
+    if (t == nullptr)
+        return new TreeNode(key, value, nullptr, nullptr);
+    if (key < t->key)
+        t->left = insert(key, value, t->left);
+    else if (key > t->key)
+        t->right = insert(key, value, t->right);
+    else
+        t->value = value;  // duplicate key → overwrite
+    return t;
+}
+```
+
+- **Test note** → know how to write `insert`, `find`, and `remove`, and what can go wrong with each
+- AVL trees → we'll get the code for the homework
+
+`TreeNode::find`
+```cpp
+static TreeNode * find(KeyType key, TreeNode * t) {
+    if (t == nullptr) return nullptr;
+    if (key < t->key) return find(key, t->left);
+    if (key > t->key) return find(key, t->right);
+    return t;  // key == t->key
+}
+```
+
+**Removing a Node — 3 Cases**
+
+1. **Leaf node** → just remove the node
+2. **Single child** → replace the node with its child
+3. **Two children** → swap key/value with the **in-order successor**, then recursively remove that successor (which now has at most one child)
+	- In-order successor → the **leftmost node of the right subtree** (smallest key larger than the one being deleted)
+	- Equivalent alternative → the **rightmost node of the left subtree** (in-order predecessor) — either works
+
+`TreeNode::remove`
+```cpp
+TreeNode * delete_node(TreeNode * t, KeyType key) {
+    if (!t) return t;
+
+    if (key < t->key)
+        t->left = delete_node(t->left, key);
+    else if (key > t->key)
+        t->right = delete_node(t->right, key);
+    else {  // found the node to delete
+        // Case 1 & 2: zero or one child
+        if (t->left == nullptr || t->right == nullptr) {
+            TreeNode * child = t->left ? t->left : t->right;
+            if (child == nullptr) {  // no child
+                child = t;
+                t = nullptr;
+            } else {                 // one child
+                *t = *child;         // copy data up from child
+            }
+            delete child;
+        }
+        // Case 3: two children → swap with in-order successor, then recurse
+        else {
+            TreeNode * succ = find_leftmost(t->right);
+            swap(t->key, succ->key);
+            swap(t->value, succ->value);
+            t->right = delete_node(t->right, key);
+        }
+    }
+    return t;
+}
+
+TreeNode * find_leftmost(TreeNode * t) {
+    while (t->left)
+        t = t->left;
+    return t;
+}
+```
+
+`TreeNode::print` (in-order traversal → keys in sorted order)
+```cpp
+void print(ostream & out, TreeNode * t) {
+    if (t == nullptr) return;
+    print(out, t->left);
+    out << t->key << " → " << t->value << "\n";
+    print(out, t->right);
+}
+```
+
+`TreeNode::delete_tree` (post-order → free children before parent)
+```cpp
+void delete_tree(TreeNode * t) {
+    if (t == nullptr) return;
+    delete_tree(t->left);
+    delete_tree(t->right);
+    delete t;
+}
+```
+
+**Binary Search Tree Class**
+
+```cpp
+template <typename KeyType, typename ValueType>
+class BinarySearchTree {
+    TreeNode * root;
+public:
+    void insert(KeyType key, ValueType value) {
+        root = TreeNode::insert(key, value, root);
+    }
+
+    ValueType find(KeyType key) {
+        TreeNode * t = TreeNode::find(key, root);
+        if (t == nullptr) {
+            insert(key, ValueType());      // default-construct on miss
+            t = TreeNode::find(key, root);
+        }
+        return t->value;
+    }
+
+    void remove(KeyType key) {
+        root = TreeNode::remove(key, root);
+    }
+
+    void print(ostream & out) {
+        TreeNode::print(out, root);
+    }
+};
+```
+
+**Time Complexity**
+
+- `insert`, `find`, `remove` → all O(h) where h = height of tree
+	- O(h) is **NOT** an acceptable final answer → must be a function of N (number of keys)
+- Roughly balanced tree → h = O(log N)
+- Unbalanced tree → h = O(N)
+- Worst case → inserting keys in (nearly) ascending or descending order → degenerates into a linked list
+- Self-balancing trees (AVL) prevent this degeneration
+
+**Tree Traversals**
+
+In-order → visits all nodes in ascending sorted order
+USE → sorting by keys
+```
+def in-order(t):
+    if t != nullptr:
+        in-order(t->left)         # 1
+        visit(t->key, t->value)   # 2
+        in-order(t->right)        # 3
+```
+- What if you swap steps 1 and 3? → visits in **descending** order
+
+Pre-order → prefix order
+USE → allows rebuilding the same tree (serialize/deserialize)
+```
+def pre-order(t):
+    if t != nullptr:
+        visit(t->key, t->value)
+        pre-order(t->left)
+        pre-order(t->right)
+```
+
+Post-order → postfix order
+USE → deleting nodes of a tree, evaluating expression trees
+e.g., `(3·5) - (4/2)` evaluated post-order
+```
+def post-order(t):
+    if t != nullptr:
+        post-order(t->left)
+        post-order(t->right)
+        visit(t->key, t->value)
+```
+
+**Tree Min / Max**
+
+Minimum → leftmost node
+```
+while (t->left != nullptr)
+    t = t->left;
+return t;
+```
+
+Maximum → rightmost node
+```
+while (t->right != nullptr)
+    t = t->right;
+return t;
+```
+
+Time complexity → O(h) where h is height of tree
+
+**When Is Recursion Appropriate?**
+
+- T(N) = N² → **no** → stack will explode
+- T(N) = N → if N gets large it will blow the stack
+- T(N) = lg(N) → **yes** → 2³³ is ~8 billion, so 33 stack frames is nothing to worry about
+
+**AVL Self-Balancing Trees**
+
+- Order-preserving rotations can keep the tree balanced
+- After every insert/remove, walk back up and rebalance → guarantees O(log N)
+
+AVL tree resources:
+- Animation of building and removing → [LINK](https://www.youtube.com/watch?v=mGF61O21W-c)
+- Detailed example building AVL Tree → [LINK](https://www.youtube.com/watch?v=7m94k2Qhg68)
+- Detailed explanation → [LINK](https://www.youtube.com/watch?v=vRwi_UcZGjU)
+- Tool for experimentation → [LINK](https://visualgo.net/en/bst)
+- Python explanation → [LINK](https://www.youtube.com/watch?v=1QSYxIKXXP4)
+- Explanation of balance factors → [LINK](https://www.youtube.com/watch?v=zP2xbKerIds)
+
+**AVL Rebalance — Pseudo-code (ChatGPT version the prof shared)**
+
+```txt
+function adjust(node):
+    if node is null:
+        return
+    if node.left is not null and node.right is not null:
+        if node.left.height - node.right.height > 1:
+            if node.left.left.height >= node.left.right.height:
+                rotate_right(node)
+            else:
+                rotate_left_right(node)
+        elif node.right.height - node.left.height > 1:
+            if node.right.right.height >= node.right.left.height:
+                rotate_left(node)
+            else:
+                rotate_right_left(node)
+    else if node.left is not null:
+        if node.left.height > 1:
+            if node.left.left.height >= node.left.right.height:
+                rotate_right(node)
+            else:
+                rotate_left_right(node)
+    else if node.right is not null:
+        if node.right.height > 1:
+            if node.right.right.height >= node.right.left.height:
+                rotate_left(node)
+            else:
+                rotate_right_left(node)
+    node.height = max(get_height(node.left), get_height(node.right)) + 1
+```
+
+**AVL Rebalance — C++**
+
+```cpp
+int get_height(Node * node)  { return node ? node->height : 0; }
+int get_balance(Node * node) {
+    return node ? get_height(node->left) - get_height(node->right) : 0;
+}
+int set_height(Node * node) {
+    return node->height = 1 + max(get_height(node->left), get_height(node->right));
+}
+
+static Node * rebalance(Node * t) {       // called by insert() and remove()
+    set_height(t);
+    int balance = get_balance(t);
+    if (balance > 1) {                    // left-heavy
+        if (get_balance(t->left) < 0)
+            t->left = left_rotate(t->left);   // LR case
+        return right_rotate(t);               // LL case
+    } else if (balance < -1) {            // right-heavy
+        if (get_balance(t->right) > 0)
+            t->right = right_rotate(t->right); // RL case
+        return left_rotate(t);                 // RR case
+    }
+    return t;
+}
+```
+
+**AVL Rotations**
+
+```cpp
+Node * left_rotate(Node * x) {
+    Node * y  = x->right;
+    Node * T2 = y->left;
+    y->left  = x;          // perform rotation
+    x->right = T2;
+    set_height(x);         // update heights (x first — it's now lower)
+    set_height(y);
+    return y;              // new subtree root
+}
+
+Node * right_rotate(Node * y) {
+    Node * x  = y->left;
+    Node * T2 = x->right;
+    x->right = y;          // perform rotation
+    y->left  = T2;
+    set_height(y);         // update heights (y first — it's now lower)
+    set_height(x);
+    return x;              // new subtree root
+}
+```
+
+**T(N) for Recursive Functions**
+
+- [Master Method for solving recurrence relations](https://en.wikipedia.org/wiki/Master_theorem_\(analysis_of_algorithms\))
+- Recursive T(N) → [LINK](https://users.cs.duke.edu/~ola/ap/recurrence.html)
+
+**Hint — Coding a C++ Template**
+
+- Fully code/test with a **specialized** type first → e.g., `BinarySearchTree` with `string` key, `int` value
+- Then name type aliases with `using`:
+	```cpp
+	using KeyType = string;
+	using ValueType = int;
+
+	class BinarySearchTree {
+	    KeyType key;       // use KeyType / ValueType throughout the class
+	    ValueType value;
+	public:
+	    // ...
+	};
+	```
+
+From Using to Template
+- Once it works with the aliases, swap them for a template header and test with `BinarySearchTree<string, int>`:
+	```cpp
+	template <typename KeyType, typename ValueType>
+	class BinarySearchTree {
+	    KeyType key;
+	    ValueType value;
+	public:
+	    // ...
+	};
+	```
+- After you verify it still works with `<string, int>`, try it with new types → e.g., `BinarySearchTree<int, string>`
+
+<!-- last cleaned: end of Lecture 9 (BST Implementation & AVL Code) -->

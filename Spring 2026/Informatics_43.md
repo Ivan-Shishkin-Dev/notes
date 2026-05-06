@@ -1422,4 +1422,74 @@ Visibility notation:
 - **Information hiding** → hide design decisions most likely to change; expose only what the outside world needs
 	- Protects other parts of the program from change when the hidden decision changes
 
-<!-- last cleaned: end of Lecture 10 (UML Class Diagrams & Design Principles) -->
+# Lecture 11: How Do We Make Software That Meets the User's Needs?
+
+**Last Time — Recap**
+
+- Every design notation supports abstraction
+- A design diagram is a statement in a language that has a syntax
+	- UML diagrams, UI mockups, pseudocode, ER diagrams, architecture diagrams, storyboards, sketches
+- Software engineering → the process of building a set of related models that represent the system-to-be
+
+**Hope… and Change… and Test!**
+
+- A/B testing → run two versions of a website (or feature) on different user groups for marketing campaigns and test which one actually helped with the business goal
+- Don't guess at what users want → measure it
+
+**Why User-Orientation (Usability) Matters**
+
+User-centered design works:
+- Simple
+- Inexpensive
+- Higher sales
+- Higher satisfaction
+- Higher efficiency
+- Benefit shifts from **conversion** (first-time customers) → **loyalty** (repeat customers)
+- …but it still often gets skipped
+
+**Usability Matters! — Quotes**
+
+- "A user interface is well-designed when the program behaves exactly how the user thought it would" — *Joel on Software*
+- "A GUI should provide GUIdance"
+- "Focus on the user, and all else will follow"
+
+**Usability Fail Examples**
+
+- **PC LOAD LETTER** → cryptic HP printer error → only the programmer understood; users had no idea what it meant
+![[Informatics_43-1778005250064.webp|500x251]]
+![[Informatics_43-1778005262028.webp|500x358]]
+- A few things wrong with this dialog → "Yes" is on the left and "No" is on the right (buttons flipped from the platform convention) → users mis-click
+![[Informatics_43-1778005291987.webp|500x321]]
+- Pretend you are the user and don't care → remove long warnings; users won't read them anyway
+- **Hawaii false missile alert (2018)** → on Jan 13, 2018 the Hawaii Emergency Management Agency sent a real emergency push alert: *"BALLISTIC MISSILE THREAT INBOUND TO HAWAII. SEEK IMMEDIATE SHELTER. THIS IS NOT A DRILL."*
+	- Cause → an employee selected the wrong item from a poorly designed dropdown menu during a routine shift change drill → "Test missile alert" and "Missile alert" sat right next to each other with similar wording
+	- The confirmation prompt was generic enough that the user clicked through it without registering the difference
+	- No "undo" / cancel mechanism existed → it took **38 minutes** to send a correction
+	- Classic UI/UX failure → dangerous options weren't visually distinguished, no confirmation friction proportional to the consequences, no rollback path
+
+**First Impressions Matter**
+
+- It should be **simple** → think Apple, think Google's homepage
+- The first 5 seconds decide whether the user trusts the product
+
+**Why Is Usability Engineering So Hard?**
+
+Usability design is based on:
+- Psychology
+- Cognitive science
+- Aesthetics
+- Art
+
+- Software engineers are generally **not** the audience of the software they develop → they have different mental models, vocabulary, and tolerance for friction
+- **UX Designers** → this is who solves these issues
+
+**Summary**
+
+- We use HCI / UCD (Human-Computer Interaction / User-Centered Design) methods for good reasons:
+	- Sales increase
+	- Performance increases
+	- Traffic counts increase
+	- Frustration decreases
+- It's all about the user!
+
+<!-- last cleaned: end of Lecture 11 (Usability & User-Centered Design) -->
