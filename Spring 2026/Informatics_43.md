@@ -1492,4 +1492,135 @@ Usability design is based on:
 	- Frustration decreases
 - It's all about the user!
 
-<!-- last cleaned: end of Lecture 11 (Usability & User-Centered Design) -->
+# Lecture 12: How Do We Make Software That Meets the User's Needs?
+
+**Last Time — Recap**
+
+- We use HCI / UCD methods for good reasons → sales increase, performance increases, traffic counts increase, frustration decreases
+- It's all about the user
+
+**User-Centered Design Methods (the 8)**
+
+1. Interviews and observations of end users
+2. Personas
+3. Scenarios
+4. Storyboards
+5. Wireframes and mockups
+6. Design guidelines
+7. Heuristic evaluation
+8. User testing
+
+**Interviews and Observations**
+
+- Watch users actually do the thing → design to serve the behavior you observe
+- Ask them what they think they want → but trust observation over self-report (people are bad at predicting their own behavior)
+
+**Personas**
+
+- Fictional, research-based profiles representing key user segments
+- Used as a tool to build empathy and guide design decisions → "would *Blake* actually use this feature?"
+
+**Scenarios**
+
+- Narrative descriptions of a persona using the system to accomplish a goal
+- Example — *Scenario 1: Joining myFlix* → While Blake is searching the internet to find local theaters playing a newly released indie film, he finds its profile page on myFlix. Excited that he can watch it from home, he creates an account, pays the monthly fee, and streams the movie from his TV's browser.
+- Example — *Scenario 2: Discovering Content* → Blake has specific tastes in films and TV. At work he browses myFlix categories and reads reviews. Summaries and recommendations that match his preferences get added to his ever-growing queue so he can quickly pick something later.
+
+**Storyboards**
+
+- Visual representations of UX stories → capture attention, provide clarity, and inspire action
+- Like a comic strip of the user's journey through the product
+
+**Wireframes and Mockups**
+
+- **Wireframes** → define the functional flow (UX) → boxes, arrows, structure, no styling
+- **Mockups** → define the visual aesthetic (UI) → colors, typography, polish
+- Both happen *before* development begins → cheap to change on paper, expensive to change in code
+
+**Design Guidelines**
+
+- Before → every team solved the same simple problem (e.g., a date picker) a different way
+- Now → the U.S. Web Design Standards give a shared baseline:
+	- Color palette
+	- Wireframes / component patterns
+	- Code (HTML, CSS)
+
+**Heuristic Evaluation**
+
+- Using research-based principles to evaluate and improve the usability of a system
+- Process:
+	- Select tasks to evaluate
+	- Someone plays the user
+	- Evaluators each focus on a specific aspect
+	- Someone takes notes
+
+**Nielsen's 10 Usability Heuristics**
+
+1. **Visibility of system status** → keep users informed about what's happening (loading screens, progress bars)
+2. **Match between system and the real world** → use words and concepts familiar to the user, not jargon (e.g., "Library" contains music, movies, TV shows)
+3. **User control and freedom** → support undo, back buttons, restart, escape hatches from unwanted states
+4. **Consistency and standards** → follow platform conventions; same word/action should mean the same thing everywhere
+5. **Error prevention** → design to prevent problems before they happen; a GUI should provide GUIdance; make the primary action more visible
+6. **Recognition rather than recall** → make objects, actions, and options visible; don't make users remember information across screens; vary fonts/styles so things are visually distinguishable
+7. **Flexibility and efficiency of use (accelerators)** → shortcuts for expert users that stay out of the way for novices
+8. **Aesthetic and minimalist design** → no irrelevant information; apply contrast, repetition, alignment, proximity (CRAP)
+9. **Help users recognize, diagnose, and recover from errors** → plain-language error messages that say what went wrong *and* what to do about it
+10. **Help and documentation** → easy to search, focused on the user's task (e.g., the little `?` tooltip on hover)
+
+**User Testing**
+
+- Improve designs *before* showing to real users:
+	- Checklists, heuristic evaluation
+	- Cognitive walkthrough
+- Planning a user test:
+	- **Subjects** → who you recruit
+	- **The system** → what version / prototype
+	- **Tasks** → what you ask them to do
+	- **The session** → how it's run
+	- **Measures taken** → time, errors, success rate, satisfaction
+- **Professional usability labs** → one-way mirrors, eye tracking, recording rigs
+- Less formal user testing also exists → hallway testing, remote sessions
+
+**Summary**
+
+- We use HCI / UCD methods → interviews/observations, personas, scenarios, storyboards, mockups, design guidelines, heuristic evaluation, user testing
+- …for good reasons → sales increase, performance increases, traffic counts increase
+- It's all about the user
+
+## Quiz 6 Study Guide
+
+**User Orientation**
+
+- Know and understand all 8 user-centered design methods (see list above)
+- Know and understand all 10 Nielsen heuristics (see list above)
+
+**Reading 1 — NN/g: "UX Lessons from Restaurants"** ([link](https://www.nngroup.com/articles/ux-learn-in-restaurants/))
+
+- **Atmosphere matters** → place settings distinguish fine dining from a roadside diner → visual polish signals quality and builds trust (same is true of web UI)
+- **Visual communication** → photos help users recognize options faster than text, overcome language barriers, and set accurate expectations
+- **Focused offerings** → specialization and limited choices reduce decision paralysis and let the business build expertise
+- **Pacing flexibility** → accommodate rushed *and* leisurely users → don't force one speed
+- **Transparent timelines** → communicate delays upfront so users can adjust expectations or make different choices
+- **Anticipatory service** → delight comes from providing what users need *before* they ask
+- **Good patterns** → clear responsibility, proactive suggestions, honest recommendations, clean interfaces, treating angry users with respect, keeping valued features through redesigns
+- **Bad patterns** → communication gaps, rigid policies, hidden required steps, unexplained jargon, abrupt redesigns that force relearning, broken promises about quality/timing
+- **Mapping to web/software** → streamline checkout, remember preferences, helpful error recovery, avoid "system-focused housekeeping" interruptions, respect user autonomy
+
+**Reading 2 — USDS: "Introducing U.S. Web Design Standards"** ([link](https://medium.com/the-u-s-digital-service/introducing-u-s-web-design-standards-aff21383afd6))
+
+- **What it is** → a shared set of UI components, visual styles, and code resources for federal government websites → consistency across agencies, flexibility for customization
+- **Problem it solves** → government sites lacked visual and functional consistency → citizens like "Joanne" (the veteran example) had to relearn confusing interfaces at every agency → wasted taxpayer dollars on agencies solving the same design problems independently
+- **What's included:**
+	- **Visual style guide** → typography and color palette (blue, gray, white, red) meeting Section 508 accessibility standards
+	- **UI components and patterns** → foundational interface elements + code
+	- **Front-end code** → HTML, Sass, CSS written for readability and cross-browser accessibility
+	- **Design principles** → clarity, credibility, trust, warmth
+- **Four core goals:**
+	1. "Make the best thing the easiest thing" via user-centered design
+	2. Bake accessibility in from the start
+	3. Balance standardization with agency-level customization
+	4. Leverage existing best practices from government and private sector
+- **Who built it** → 18F + U.S. Digital Service, over a 4-month cycle, with input from FDA, VA, SSA, and others
+- **Intended impact** → faster and cheaper site development, consistent UX across agencies, higher standards for public digital services
+
+<!-- last cleaned: end of Lecture 12 (UCD Methods, Nielsen Heuristics, Quiz 6 Study Guide) -->
