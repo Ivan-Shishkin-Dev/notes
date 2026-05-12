@@ -1623,4 +1623,125 @@ Usability design is based on:
 - **Who built it** → 18F + U.S. Digital Service, over a 4-month cycle, with input from FDA, VA, SSA, and others
 - **Intended impact** → faster and cheaper site development, consistent UX across agencies, higher standards for public digital services
 
-<!-- last cleaned: end of Lecture 12 (UCD Methods, Nielsen Heuristics, Quiz 6 Study Guide) -->
+# Lecture 13: How Do We Know the Software Works? (Testing & QA)
+
+**Last Time — Recap**
+
+- We use HCI / UCD methods → interviews/observations, personas, scenarios, storyboards, mockups, design guidelines, heuristic evaluation, user testing
+- …for good reasons → sales increase, performance increases, traffic counts increase
+- It's all about the user
+
+**Failures: A Second Look**
+
+- **Boeing 737 Max** → "The 737 Max saga teaches us not only about the limits of technology and the risks of complexity, it teaches us about our real priorities. Today, safety doesn't come first — money comes first, and safety's only utility in that regard is in helping to keep the money coming. The problem is getting worse because our devices are increasingly dominated by something that's all too easy to manipulate: software."
+
+**Other Famous Software Failures**
+
+- **Toyota "Unintended Acceleration"** → Throughout the late 2000s, Toyota vehicles were reported to accelerate on their own without driver input → investigations traced the root cause to embedded software faults in the engine control unit (unsafe memory practices, lack of fail-safe behavior). Linked to multiple fatalities and a massive recall.
+- **Apollo 8** → While in lunar orbit, an astronaut accidentally entered a command (Verb 01 Noun 01) that erased critical navigation data from the guidance computer → mission control had to manually re-uplink the state vector. A UX failure as much as a software one — the system let a single keystroke wipe load-bearing state.
+- **Mars Polar Lander (1999)** → Crashed into the Martian surface because a software bug misinterpreted the vibration of landing-leg deployment as touchdown → engines shut off ~40 meters above the ground. $165M mission lost to one boolean flag.
+- **Y2K**
+	- **Bug** → date formats stored as MM/DD/YY → does "00" mean 2000 or 1900? Does "1999" roll over to "19100"?
+	- **Effects** → relatively minor in the end (because of massive remediation effort)
+	- **Cost** → ~$300 billion globally in preventive fixes
+
+**NASA "Cardinal Rules for Safety"**
+
+- No single event or action shall be allowed to initiate a potentially hazardous event
+- When an unsafe condition or command is detected, the system shall:
+	- Inhibit the potentially hazardous event sequence
+	- Initiate procedures or functions to bring the system to a predetermined "safe" state
+
+**The Power of Ten — 10 Rules for Writing Safety-Critical Code**
+
+1. Restrict to simple control flow constructs
+2. Give all loops a fixed upper bound
+3. Do not use dynamic memory allocation after initialization
+4. Limit functions to no more than 60 lines of text
+5. Use a minimum of two assertions per function on average
+6. Declare data objects at the smallest possible level of scope
+7. Check the return value of non-void functions, and check the validity of function parameters
+8. Limit the use of the preprocessor to file inclusion and simple macros
+9. Limit the use of pointers → no more than two levels of dereferencing per expression
+10. Compile with all warnings enabled, and use one or more source code analyzers
+
+## Quality Assurance
+
+**QA Goals: Verification and Validation**
+
+- **Quality Assurance** → all activities designed to measure and improve quality in a product
+- **Verification** → Does it conform to specifications? (are we building the thing right?)
+- **Validation** → Does it serve its purpose? (are we building the right thing?)
+
+![[Informatics_43-1778609270845.webp|500x105]]
+
+**QA Techniques**
+
+- Formal methods
+- Static analysis of program properties
+- Reviews and inspections
+- Testing
+
+## Testing: Who, What, How
+
+**Basic Process**
+
+- Detect and correct bugs in a software product
+- Exercise a module, collection of modules, or system:
+	- Devise test case (input) → create expected output
+	- Run test case
+	- Capture actual output
+	- Compare actual output to expected output
+	- Lather, rinse, repeat
+- Outcomes:
+	- Actual output = expected output → test case **succeeds / passes**
+	- Actual output ≠ expected output → test case **fails** (report failure)
+- Much of the testing process is automated
+
+**Testing Goals**
+
+- Find and fix failures / faults / errors
+- Improve confidence that the system performs as specified (verification) and as desired (validation)
+- All in a manner that is:
+	- Accurate
+	- ~~Complete~~ → **Thorough** (you can never be complete)
+	- Repeatable
+	- Systematic
+- "Program testing can be used to show the presence of bugs, but never to show their absence." — Dijkstra
+
+**Testing Terminology** (from IEEE 610.12-90)
+
+- **Mistake** → a human action that produces an incorrect result ("mistake" applies to both coder and user)
+- **Fault / Bug** → an incorrect step, process, or data definition in a computer program (something you can point to in the code)
+- **Error** → a difference between a computed result and the correct result (could be internal or external)
+- **Failure** → the [incorrect] result of a fault (externally visible unexpected behavior or output)
+- The common term "**defect**" usually means *fault*
+
+**Who Does the Testing**
+
+- Programmers, testers
+- Users:
+	- Acceptance testing
+	- Alpha testing
+	- Beta testing
+	- Crowdsourcing / bug bounties
+
+**Levels of Testing**
+
+- **Unit testing** → testing of a single code unit
+- **Functional / integration testing** → testing of interfaces among integrated units
+- **System / acceptance testing** → testing of the complete system for satisfaction of requirements
+
+![[Informatics_43-1778609596696.webp|500x202]]
+![[Informatics_43-1778609608268.webp|500x366]]
+
+**Summary**
+
+- Many failures are caused by a lack of good quality assurance (QA) practices
+- QA = all activities designed to measure and improve quality in a product → validation & verification
+- Testing is the most common QA activity
+	- Different levels: unit / functional / system
+	- Goal: find and fix failures / faults / errors
+
+<!-- last cleaned: end of Lecture 13 (Testing & QA: failures, Power of Ten, V&V, terminology, levels) -->
+
