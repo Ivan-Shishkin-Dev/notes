@@ -2652,4 +2652,246 @@ From Using to Template
 	```
 - After you verify it still works with `<string, int>`, try it with new types → e.g., `BinarySearchTree<int, string>`
 
-<!-- last cleaned: end of Lecture 9 (BST Implementation & AVL Code) -->
+
+# Lecture 10: Sorting
+
+**Sorting Overview**
+
+- Sorting → rearrange a sequence so the keys obey some ordering (usually ascending)
+- Why we care → sorted data unlocks O(log N) binary search, makes duplicate/range queries cheap, and is a building block for tons of other algorithms (merge joins, sweep-line, etc.)
+- Two big families:
+	- **Comparison-based sorts** → compare keys pairwise → best possible is O(N · log N) (proven lower bound)
+	- **Non-comparison sorts** → use key structure (digits, buckets) → can hit O(N), but not general purpose (counting sort, radix sort)
+- Key properties to track for every sort:
+	- **Time complexity** → best / average / worst → matters because some sorts have horrible worst cases on adversarial inputs (quick sort on sorted input with bad pivot)
+	- **Space complexity** → in-place (O(1) or O(log N) for recursion stack) vs. out-of-place (O(N) extra)
+	- **Stable** → equal keys keep their original relative order → matters when sorting by one field but wanting the secondary order preserved
+	- **Adaptive** → runs faster on nearly-sorted input (insertion sort is the poster child)
+
+**Big-O Reference Table**
+
+| Sort      | Best         | Average      | Worst        | Space    | Stable? | Notes                                                |
+| --------- | ------------ | ------------ | ------------ | -------- | ------- | ---------------------------------------------------- |
+| Bubble    | O(N)         | O(N²)        | O(N²)        | O(1)     | Yes     | Pedagogical only                                     |
+| Selection | O(N²)        | O(N²)        | O(N²)        | O(1)     | No      | Fewest swaps (N−1 of them)                           |
+| Insertion | O(N)         | O(N²)        | O(N²)        | O(1)     | Yes     | Great on small / nearly-sorted inputs                |
+| Shell     | O(N · log N) | ~O(N^1.25)   | O(N²)        | O(1)     | No      | Depends on gap sequence                              |
+| Merge     | O(N · log N) | O(N · log N) | O(N · log N) | O(N)     | Yes     | Guaranteed O(N · log N), extra memory                |
+| Quick     | O(N · log N) | O(N · log N) | O(N²)        | O(log N) | No      | In-place, fast in practice, bad pivots → degenerates |
+
+**Bubble Sort**
+
+![[BubbleSort.webm]]
+
+- Idea → repeatedly walk the array, swap adjacent out-of-order pairs → largest value "bubbles" to the end each pass
+- After pass k → last k elements are in their final position
+- Optimization → if a full pass makes zero swaps, the array is sorted → exit early → gives the O(N) best case on already-sorted input
+- One pass on `[5, 1, 4, 2, 8]`:
+```
+[5, 1, 4, 2, 8]  → swap 5,1   →  [1, 5, 4, 2, 8]
+[1, 5, 4, 2, 8]  → swap 5,4   →  [1, 4, 5, 2, 8]
+[1, 4, 5, 2, 8]  → swap 5,2   →  [1, 4, 2, 5, 8]
+[1, 4, 2, 5, 8]  → no swap    →  [1, 4, 2, 5, 8]   ← 8 is in place
+```
+- O(N²) average and worst → makes ~N²/2 comparisons and up to N²/2 swaps → swap-heavy compared to selection sort
+- Stable → only swaps adjacent elements, never jumps equal keys past each other
+- Real-world use → basically none. Lives in textbooks because it's the easiest sort to explain and analyze
+
+**Selection Sort**
+
+![[SelectionSort.webm]]
+
+- Idea → improves on bubble sort by making **only one exchange per pass**
+	- Walk the unsorted part, track the index of the max (or min) element, swap it into the boundary position at the end of the pass → one swap per step
+- After step k → the last k positions hold the k largest elements in sorted order
+- One step on `[5, 1, 4, 2, 8]` (selecting max into the end):
+```
+[5, 1, 4, 2, 8]   scan → max is 8 at index 4
+                  swap with position 4 (no-op here)
+[5, 1, 4, 2 | 8]  ← 8 locked in
+next step scans [5, 1, 4, 2] → max is 5 at index 0
+                  swap with position 3
+[2, 1, 4 | 5, 8]
+```
+- O(N²) **always** → no early-exit trick → unlike bubble/insertion, selection sort doesn't get faster on sorted input → it still scans every unsorted element to find the max
+- **Not stable** → the long-distance swap can jump an equal key past another → e.g., `[2a, 2b, 1]` → swap min `1` with position 0 → `[1, 2b, 2a]` (original order flipped)
+- O(1) extra space, exactly N − 1 swaps → minimizes write cost → useful when **writes are expensive** (flash memory, EEPROM) and the array is small
+- vs. bubble sort → same time complexity, far fewer swaps, but loses stability and the best-case bonus
+
+**Insertion Sort**
+
+![[InsertionSort.webm]]
+
+- Idea → grow a sorted prefix one element at a time → take the next unsorted element, slide it left past anything larger until it sits in the right spot
+- How a human sorts a hand of playing cards
+- After step k → first k+1 elements are sorted relative to each other (not yet in final position)
+- One step on `[3, 7, 1, 5]` (inserting `1`):
+```
+[3, 7 | 1, 5]   ← sorted prefix [3, 7], next element is 1
+[3, 7, _, 5]    take 1 out
+[3, _, 7, 5]    7 > 1 → shift right
+[_, 3, 7, 5]    3 > 1 → shift right
+[1, 3, 7, 5]    drop 1 at the front
+```
+- **O(N) best case** → already-sorted input → every new element triggers one comparison and zero shifts → why insertion sort is "adaptive"
+- O(N²) average and worst → reverse-sorted input → every new element shifts past everything to its left
+- **Stable** → only shifts elements one slot at a time, never jumps equals
+- O(1) extra space, in place
+- Where it actually wins:
+	- Small arrays (typically N < ~16) → low constant factor beats merge / quick sort → many real `std::sort` implementations switch to insertion sort for small subarrays inside quicksort
+	- Nearly-sorted data → linear in the number of inversions → faster than O(N · log N) sorts in practice
+	- Streaming → can sort incrementally as new items arrive
+
+```cpp
+void insertion_sort(vector<int>& a) {
+    for (int i = 1; i < (int)a.size(); i++) {
+        int key = a[i];
+        int j = i - 1;
+        while (j >= 0 && a[j] > key) {  // slide larger elements right
+            a[j + 1] = a[j];
+            j--;
+        }
+        a[j + 1] = key;
+    }
+}
+```
+
+**Shell Sort**
+
+![[ShellSort.webm]]
+
+- Idea → insertion sort generalized → instead of comparing adjacent elements (gap = 1), compare elements that are `gap` apart, then shrink the gap → finish with a regular insertion sort (gap = 1)
+- Why it works → large gaps let out-of-place elements travel far in few moves → by the time gap = 1, the array is "almost sorted," and insertion sort eats that case in near-linear time
+- **Gap sequence matters a lot** → it's the whole game:
+	- Shell's original → N/2, N/4, ..., 1 → O(N²) worst case
+	- Hibbard → 1, 3, 7, 15, ... (2ᵏ − 1) → O(N^1.5) worst case
+	- Sedgewick → mixed sequence → ~O(N^1.33) average
+	- The "between O(N) and O(N²)" the prof mentioned → no closed-form average for a generic gap sequence
+- Not stable → long-distance swaps inside each gap-pass can flip equal keys
+- In-place → O(1) extra space
+- Great when you need an in-place sort that's faster than O(N²) but want to avoid recursion (embedded systems, very memory-tight code)
+
+```cpp
+void shell_sort(vector<int>& a) {
+    int n = a.size();
+    for (int gap = n / 2; gap > 0; gap /= 2) {       // halving gap
+        for (int i = gap; i < n; i++) {
+            int key = a[i];
+            int j = i;
+            while (j >= gap && a[j - gap] > key) {   // gapped insertion sort
+                a[j] = a[j - gap];
+                j -= gap;
+            }
+            a[j] = key;
+        }
+    }
+}
+```
+
+**Merge Sort**
+
+![[MergeSort.webm]]
+
+- Idea → classic **divide-and-conquer**:
+	1. Split the array in half
+	2. Recursively sort each half
+	3. **Merge** the two sorted halves into one sorted array
+- Base case → array of size 0 or 1 is already sorted
+- Recursion tree on `[5, 2, 4, 7, 1, 3, 2, 6]`:
+```
+                [5, 2, 4, 7, 1, 3, 2, 6]
+                /                      \
+        [5, 2, 4, 7]                  [1, 3, 2, 6]
+         /        \                    /        \
+       [5, 2]    [4, 7]             [1, 3]    [2, 6]
+       / \        / \                / \        / \
+      [5][2]    [4][7]              [1][3]    [2][6]
+       \ /        \ /                \ /        \ /
+       [2,5]     [4,7]               [1,3]     [2,6]
+         \        /                    \        /
+        [2, 4, 5, 7]                  [1, 2, 3, 6]
+                \                      /
+                [1, 2, 2, 3, 4, 5, 6, 7]
+```
+- log₂N levels of recursion → O(N) work merging at each level → **O(N · log N) for all cases** (best, average, worst)
+- Merge step → walk two sorted lists with two pointers → take whichever head is smaller → O(N) per merge
+- **Stable** → as long as the merge favors the **left** list on ties → equal keys keep their original relative order
+- O(N) extra space → needs a scratch buffer for the merge → main downside vs. quick sort
+- When to prefer it:
+	- Need a **guaranteed** O(N · log N) → no degenerate worst case like quick sort
+	- Sorting linked lists → merge sort works without random access and without extra memory (just rewire pointers)
+	- External sorting / sorting data too big for RAM → merging is naturally streaming
+
+```cpp
+void merge(vector<int>& a, int lo, int mid, int hi) {
+    vector<int> buf(hi - lo);
+    int i = lo, j = mid, k = 0;
+    while (i < mid && j < hi)
+        buf[k++] = (a[i] <= a[j]) ? a[i++] : a[j++];   // <= keeps it stable
+    while (i < mid) buf[k++] = a[i++];
+    while (j < hi)  buf[k++] = a[j++];
+    for (int x = 0; x < (int)buf.size(); x++)
+        a[lo + x] = buf[x];
+}
+
+void merge_sort(vector<int>& a, int lo, int hi) {
+    if (hi - lo <= 1) return;                          // base case
+    int mid = lo + (hi - lo) / 2;
+    merge_sort(a, lo, mid);
+    merge_sort(a, mid, hi);
+    merge(a, lo, mid, hi);
+}
+```
+
+**Quick Sort**
+
+![[QuickSort.webm]]
+
+- Idea → divide-and-conquer like merge sort, but the work happens **before** the recursion, not after:
+	1. Pick a **pivot** element
+	2. **Partition** → rearrange the array so everything < pivot is on the left, everything > pivot is on the right
+	3. Recursively quick sort each side
+- The pivot is in its final sorted position after partitioning → no merge step needed → that's the "merge sort without extra memory" insight
+- O(N) partition × log N average recursion depth → **O(N · log N) average**
+- **Degeneration** → if every pivot is the smallest (or largest) element, partition splits N into (0, N−1) → recursion depth becomes N → **O(N²) worst case**
+	- Classic trigger → already-sorted input + "always pick first element as pivot" → every partition is maximally lopsided
+- Pivot strategies (each one is a fix for the previous degeneration):
+	- **First / last element** → fast, but O(N²) on sorted input
+	- **Random pivot** → expected O(N · log N), no adversarial input can force the worst case
+	- **Median-of-three** → take the median of `a[lo], a[mid], a[hi]` → cheap to compute, kills the sorted-input degeneration → what most production sorts use
+- O(log N) extra space → recursion stack only (no scratch buffer) → in-place modulo the stack
+- **Not stable** → the partition step swaps long distances → equal keys can swap past each other
+- Why quick sort tends to beat merge sort in practice even though both are O(N · log N):
+	- In-place → better cache behavior, no allocation
+	- Tight inner loop → small constant factor on modern CPUs
+- Real-world → `std::sort` is typically **introsort** → quick sort with a depth limit; when recursion gets too deep, it bails out to heap sort to guarantee O(N · log N), and switches to insertion sort for small subarrays
+
+```cpp
+int partition(vector<int>& a, int lo, int hi) {       // Lomuto partition
+    int pivot = a[hi - 1];                            // last element as pivot
+    int i = lo;
+    for (int j = lo; j < hi - 1; j++) {
+        if (a[j] < pivot)
+            swap(a[i++], a[j]);
+    }
+    swap(a[i], a[hi - 1]);                            // pivot to its final spot
+    return i;
+}
+
+void quick_sort(vector<int>& a, int lo, int hi) {
+    if (hi - lo <= 1) return;
+    int p = partition(a, lo, hi);
+    quick_sort(a, lo, p);
+    quick_sort(a, p + 1, hi);
+}
+```
+
+**Summary**
+
+- **Use insertion sort** → small or nearly-sorted arrays
+- **Use merge sort** → need guaranteed O(N · log N), or sorting linked lists / external data
+- **Use quick sort** (or introsort) → general-purpose in-memory sorting, especially for primitives where stability doesn't matter
+- **Bubble / selection / shell** → mostly historical, with selection sort hanging on for write-expensive memory and shell sort for tiny embedded code
+- Big lesson → **time complexity isn't the whole story** → stability, in-place-ness, adaptiveness, and constant factors decide which sort to actually reach for
+
+<!-- last cleaned: end of Lecture 10 (Sorting) -->
