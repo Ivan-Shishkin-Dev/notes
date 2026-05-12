@@ -2894,4 +2894,342 @@ void quick_sort(vector<int>& a, int lo, int hi) {
 - **Bubble / selection / shell** → mostly historical, with selection sort hanging on for write-expensive memory and shell sort for tiny embedded code
 - Big lesson → **time complexity isn't the whole story** → stability, in-place-ness, adaptiveness, and constant factors decide which sort to actually reach for
 
-<!-- last cleaned: end of Lecture 10 (Sorting) -->
+# Lecture 11: Sorting (In-Lecture Deep Dive) & Heap Sort
+
+**Sorting Recap**
+
+- Sorting → putting items in order (e.g. ascending)
+- Simplest sorts are slow → O(N²)
+	- **Insertion sort** → insert each element at the right spot in a growing sorted prefix
+	- **Bubble sort** → bubble the largest value up to the end each pass
+	- **Selection sort** → scan for the min/max, swap it into place
+- **Merge sort** → classic example of recursion → O(N · log N)
+	- Trade-off → uses O(N) extra memory for the merge buffer
+
+```cpp
+void merge_sort(string a[], int left, int right) {
+    int mid = (left + right) / 2;
+    if (left < right) {
+        merge_sort(a, left, mid);
+        merge_sort(a, mid + 1, right);
+        // include the midpoint in the left subpartition — the right starts at mid+1
+        merge(a, left, mid, right);  // requires extra array for the merge
+    }
+}
+```
+
+**Ideal Sort Algorithm Properties (NO SUCH SORT EXISTS)**
+
+- **Stable** → equal keys aren't reordered
+- **In place** → O(1) extra space
+- **Worst-case O(N · log N)** key comparisons
+- **Worst-case O(N)** swaps
+- **Adaptive** → faster when data is nearly sorted or has few unique keys
+- No single algorithm has all of these → "best" sort depends on application
+
+**Two "Good" Sorts to Study**
+
+- Good sorting algorithms are more complex than the naïve ones
+- We focus on **quick sort** and **heap sort**
+	- Both are *roughly* in place → O(log N) extra memory (recursion stack for quicksort, none for heapsort)
+	- Both run O(N · log N) on average
+- Animations → http://www.sorting-algorithms.com/
+
+**Quick Sort**
+
+- Complexity → O(N · log N) average, O(N²) worst case
+	- Worst case is exponentially unlikely with a little effort (good pivot selection)
+	- Uses O(log N) extra space (recursion stack)
+- In practice → the fastest general-purpose sort
+- Animation → https://www.youtube.com/watch?v=vxENKlcs2Tw
+- Algorithm
+	- Pick a value in the partition called the **pivot**
+		- **The pivot is the only element put in its final correct spot per call**
+		- Middle is best case → the edges are worst case
+		- Same intuition as binary search being bad when the target sits at an edge → unbalanced split
+		- Choosing the wrong pivot wrecks the runtime → the original implementation picked the last item, which is why **nearly-sorted input FUCKED it**
+		- A better pivot is roughly the middle of the range of values
+		- Picking log N pivots and moving them is O(N) → still cheap
+		- Next iteration → use a random number generator for the pivot (works well) → but there's something even better (median-of-three, below)
+	- Partition the range
+		- Values less than pivot go on one side
+		- Values greater than pivot go on the other
+	- Recursively sort both the lower and higher partitions
+
+```cpp
+void quicksort(string A[], int low, int high) {
+    if (low < high) {
+        int pivot_index = partition(A, low, high);
+        // partition puts the pivot where it would be if the array were sorted
+        quicksort(A, low, pivot_index - 1);
+        quicksort(A, pivot_index + 1, high);
+    }
+}
+```
+
+- Classic divide-and-conquer → quicksort sorted 2,000,000,000 integers in 20 minutes
+
+**Partitioning**
+
+- Move values less than pivot to one side (https://www.youtube.com/watch?v=ZHVk2blR45Q)
+- Move values greater than pivot to the other side
+- Returns the index where the pivot ends up after partitioning
+
+```cpp
+int partition(string A[], int low, int high) {
+    string pivot = select_pivot(A, low, high);
+    int below = low, above = high - 1;
+    for (;;) {
+        while (A[below] < pivot) { ++below; }
+        while (pivot < A[above]) { --above; }
+        if (below < above)               // two in wrong partition
+            swap(A[below++], A[above--]);
+        else break;
+    }
+    swap(A[below], A[high]);             // restore pivot
+    return below;
+}
+```
+
+**Three-Way Partition (What It Actually Means)**
+
+- A true three-way partition splits the array into **three regions** instead of two:
+	- `< pivot`  |  `== pivot`  |  `> pivot`
+- AKA the **Dutch National Flag** partition (Dijkstra)
+- Why it's "best in practice" → when the input has **many duplicate keys**, all equal-to-pivot elements get placed in their final spot in a single pass and are **never recursed on**
+	- Standard 2-way partition keeps shuffling equal keys around across recursive calls → wasted work
+- Used by Sedgewick / Bentley-McIlroy quicksort (the basis for many stdlib `sort` implementations)
+- Sketch:
+
+```cpp
+// Dutch National Flag — three regions: <pivot, ==pivot, >pivot
+void quicksort_3way(vector<int>& a, int lo, int hi) {
+    if (hi <= lo) return;
+    int lt = lo, gt = hi;
+    int pivot = a[lo];
+    int i = lo + 1;
+    while (i <= gt) {
+        if      (a[i] < pivot) swap(a[lt++], a[i++]);
+        else if (a[i] > pivot) swap(a[i], a[gt--]);
+        else                   i++;       // equal to pivot → leave in place
+    }
+    quicksort_3way(a, lo, lt - 1);
+    quicksort_3way(a, gt + 1, hi);
+}
+```
+
+**Original Select Pivot**
+
+- Choosing the pivot is critical to performance
+- Algorithm assumes pivot value sits in `A[high]`
+
+```cpp
+string select_pivot(string A[], int low, int high) {
+    return A[high];
+}
+```
+
+- Original picks the last value → what could go wrong?
+	- If the input is partially sorted, the pivot ends up near one end → partitions are wildly unequal → O(N²)
+
+**Improved Select Pivot**
+
+- Ideal pivot → median of the entire partition → but computing that is O(N) (too expensive)
+- Could pick a random index between `low` and `high` → works well, breaks adversarial inputs
+- **Better choice → median-of-three → O(1)**
+	- Look at the first, last, and middle values
+	- Use the median of those three as the pivot
+	- Yields equal partitions for pre-sorted lists
+
+```cpp
+string median_of_three(string A[], int low, int high) {
+    int mid = (low + high) / 2;
+    if (A[mid]  < A[low])  swap(A[low],  A[mid]);
+    if (A[high] < A[low])  swap(A[low],  A[high]);
+    if (A[mid]  < A[high]) swap(A[mid],  A[high]);
+    // The median value is now sitting in A[high], so the existing
+    // partition() code works unchanged — and won't degenerate on sorted input
+    return A[high];
+}
+```
+
+**Can You Defeat Median-of-Three?**
+
+- Yes → you can construct adversarial inputs where median-of-three still picks bad pivots
+- Small example → `[1, 4, 2, 5, 3]`
+	- `A[low] = 1`, `A[mid] = 2`, `A[high] = 3` → sorted: 1, 2, 3 → median is **2**
+	- After the median-of-three swaps, pivot = 2 ends up in `A[high]`
+	- 2 is the **second-smallest** value in the whole array → partition yields `[1]` on the left and `[4, 3, 5]` on the right → already badly unbalanced
+- General trick → arrange the array so the median of `{first, middle, last}` is always near the min or max of the partition → keeps recursing on near-full subarrays
+- McIlroy's **"A Killer Adversary for Quicksort"** (1999) builds these inputs *adaptively* by watching what the sort does → can force O(N²) on essentially any deterministic median-of-three quicksort
+- Real-world fix → introsort (below) → falls back to heapsort if recursion gets too deep, guaranteeing O(N · log N)
+
+**Group Discussion: Quick Sort on Small Arrays**
+
+- Quick sort doesn't perform well on small arrays → insertion sort beats it
+- Why does it perform poorly on small arrays?
+- What can we do to improve its performance?
+
+**Small Arrays**
+
+- Quick sort underperforms on small arrays → the overhead of recursion and partitioning swamps the actual sorting work
+	- Insertion sort wins on small slices because it has tiny constants and is cache-friendly
+- **Hybrid algorithm**
+	- For slices larger than K → use quick sort
+	- For smaller slices → use insertion sort
+	- K is usually between 10 and 16
+
+**Hybrid Quick Sort**
+
+```cpp
+void quicksort(string A[], int low, int high) {
+    if (high - low < K) {                       // constexpr int K = 13;
+        insertionsort(A, low, high);
+    } else {
+        string pivot = median_of_three(A, low, high);
+        int i = partition(A, low, high, pivot);
+        quicksort(A, low, i - 1);
+        quicksort(A, i + 1, high);
+    }
+}
+```
+
+**Introspective Sort (IntroSort) → combines 3 sorts**
+
+- Switches from quicksort to **heapsort** if recursion depth gets too deep → guards against O(N²) worst case
+- Uses **median-of-three** pivot selection
+- Switches to **insertion sort** for slices smaller than 16 (10–15 is the sweet spot)
+- The June 2000 [SGI](http://en.wikipedia.org/wiki/Silicon_Graphics) C++ [STL `stl_algo.h`](http://en.wikipedia.org/wiki/Standard_Template_Library) [unstable sort](http://en.wikipedia.org/wiki/Sorting_algorithm#Stability) uses **Musser's introsort** approach
+- Big idea → **identify the worst cases of one sort and switch to a different one before they bite**
+
+```cpp
+void introsort_util(vector<string>& arr, int low, int high, int depth_limit) {
+    if (high - low < K) {                       // K = 13
+        insertion_sort(arr, low, high);
+        return;
+    }
+    if (depth_limit == 0) {
+        heapsort(arr, low, high);               // fallback when recursion is too deep
+        return;
+    }
+    // quicksort branch
+    int p = partition(arr, low, high);
+    introsort_util(arr, low, p - 1, depth_limit - 1);
+    introsort_util(arr, p + 1, high, depth_limit - 1);
+}
+
+void introsort(vector<string>& arr, int low, int high) {
+    int depth_limit = 2 * log(high - low);
+    introsort_util(arr, low, high, depth_limit);
+}
+```
+
+**Heap Sort**
+
+**Binary Heap**
+
+- **Heap property** → each node's key is ≥ its children's keys
+	- Max-heaps use ≥, min-heaps use ≤
+- A **complete binary tree** has every level full
+	- Except the lowest level, which fills from left to right
+	- Doesn't need to be stored as an actual tree structure → an array works fine
+- A **binary heap** = complete binary tree + heap property
+- Common uses → **priority queue**, Dijkstra's SSSP, Prim's MST
+- Complete binary trees can be stored in a flat array → index 0 is the root:
+
+```cpp
+int left_child(int i)  { return 2 * i + 1; }
+int right_child(int i) { return 2 * i + 2; }
+int parent(int i)      { return (i - 1) / 2; }
+```
+
+**Binary Heap Operation: Heapify-Up**
+
+- AKA **Sift-Up** / **Bubble-Up** → O(log N)
+- Used after inserting a new element at the last array slot of the heap
+- Move the new element toward the root, swapping with its parent while the parent is smaller (for a max-heap)
+- Stops when the element is in its correct spot, or reaches the root
+- Useful for priority queue inserts
+- Visualization → https://www.youtube.com/watch?v=Q1yi1eaqN7I
+- The sorted output gets built *below* the binary heap (in the same array)
+
+**Binary Heap Operation: Heapify-Down**
+
+- AKA **Sift-Down** / **Trickle-Down**
+- Used after deleting the root → the last element in the heap is moved to the root position
+- Compare the element with its children
+- If it's smaller than either child, swap it with the **larger** child (for a max-heap)
+- Repeats until the element is in place, or both children are smaller
+- Useful for heap sort
+
+**Heap Sort: Concept**
+
+- Useful for priority queue
+- Idea → **2 · N · log N** work total → heap sort makes 2 passes but **never gets worse than O(N · log N)** (unlike quicksort's O(N²) worst case)
+- Algorithm
+	- Convert unsorted array to a binary heap of N values → O(N) amortized (the N/2 internal nodes × log N is actually a tighter bound that sums to O(N))
+	- Heapify to bring the largest value to the root
+	- Swap heap root with the slot just past the end of the heap → that slot becomes the top of the sorted region
+	- Decrease heap size by one
+	- Continue until only 1 item is left in the heap
+- Complexity → O(N · log N)
+	- But slower than quicksort in practice (cache-unfriendly access pattern)
+	- HeapSort → 45 minutes to sort 1,000,000,000 integers
+	- Quicksort → 20 minutes to sort 2,000,000,000 integers
+		- **Half as many items took twice as long to sort** → quicksort wins on constant factors
+- References
+	- Example video → https://www.youtube.com/watch?v=2DmK_H7IdTo
+	- GeeksforGeeks → https://www.geeksforgeeks.org/dsa/heap-sort/
+	- Wikipedia → https://en.wikipedia.org/wiki/Heapsort
+
+**Heapify (Down)**
+
+```cpp
+void heapify(vector<string>& vec, int size, int root) {       // O(log N)
+    int largest = root;
+    int left  = 2 * root + 1;
+    int right = 2 * root + 2;
+    // If left child is larger than root
+    if (left  < size && vec[left]  > vec[largest]) largest = left;
+    // If right child is larger than largest so far
+    if (right < size && vec[right] > vec[largest]) largest = right;
+    // If largest is not root, swap and recurse down the affected subtree
+    if (largest != root) {
+        swap(vec[root], vec[largest]);
+        heapify(vec, size, largest);    // only follow one path — the larger child
+    }
+}
+```
+
+**Heap Sort**
+
+```cpp
+void heapSort(std::vector<std::string>& vec) {
+    int size = vec.size();
+
+    // Build max heap (rearrange so the largest is at the root)
+    for (int root = size / 2 - 1; root >= 0; --root)    // ~N/2 calls
+        heapify(vec, size, root);                       // O(log N) each
+
+    // Extract elements from the heap one by one
+    for (int end = size - 1; end > 0; --end) {          // ~N iterations
+        swap(vec[0], vec[end]);                         // move max to end
+        heapify(vec, end, 0);                           // re-heapify the shrunk heap, O(log N)
+    }
+}
+```
+
+**Soft Summaries (Same Length, One Line Each)**
+
+- **Terms** → *top array* = sorted region, *bottom array* = unsorted region; *first/last* = ends of the unsorted region; *min/max* = smallest/largest key
+- **Bubble sort** → walks the bottom array, bubbling the max up to the last position of the sorted top
+	- Literally just moves the largest one to the top, then the next pass works on the remaining N−1
+- **Insertion sort** → takes the first element of the bottom array, inserts it into the sorted top → like `SortedArrayList::insert()`
+	- Find where it belongs, shift everything down/up, then drop it in
+- **Selection sort** → scans the bottom array for the min, swaps it into the next slot of the sorted top
+	- *Difference vs. insertion sort* → selection sort **searches the unsorted side** for the right element (one swap per pass, fixed-cost scan), while insertion sort **takes whatever comes next** and searches the **sorted side** for where to put it (lots of shifting, but adaptive — already-sorted runs cost ~nothing)
+- **Heap sort** → extracts the max from the root of a max-heap, swaps it to the top of the sorted region (built below the heap in the same array)
+- **Merge sort** → divides array in half, sorts each half recursively, then interleave-merges them into a sorted list
+- **Quick sort** → picks a pivot, places it in its final sorted position, then recursively sorts the sub-arrays before and after it
+
+<!-- last cleaned: end of Lecture 11 (Sorting Deep Dive & Heap Sort) -->
