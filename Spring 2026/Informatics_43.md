@@ -1743,5 +1743,83 @@ Usability design is based on:
 	- Different levels: unit / functional / system
 	- Goal: find and fix failures / faults / errors
 
-<!-- last cleaned: end of Lecture 13 (Testing & QA: failures, Power of Ten, V&V, terminology, levels) -->
+# Lecture 14: How Do We Know the Software Works?
 
+**Last Time**
+
+- Many failures are caused by a lack of good quality assurance (QA) practices
+- QA = all activities designed to measure and improve quality in a product → validation & verification
+- Testing is the most common QA activity
+	- Different levels: unit / functional / system
+	- Goal: find and fix faults / errors / failures
+
+**This Lecture**
+
+- How to choose test cases
+- How to know if the program's behavior is correct
+- Bugs
+- How do we know when we are done testing?
+
+## Choosing Test Cases
+
+**How to Choose Test Cases?**
+
+- There is usually an infinite number of possible test cases, so we must take a small sample
+
+```cpp
+int multiplier(int a, int b) {
+	return a * b;
+}
+```
+
+- Even for a trivial 2-argument function, the input space is huge → can't try every (a, b) pair
+
+![[Informatics_43-1778782278135.webp|500x304]]
+
+**Ways to Choose Test Cases**
+
+- **Intuition** → gut feel, experience with where bugs tend to hide
+- **Specification** (black-box testing) → derive tests from what the program is *supposed* to do
+	- Equivalence class partitioning → group inputs that should behave the same way, pick one per group
+	- Boundary-value analysis → test at and around edges (0, max, off-by-one, empty input)
+- **Code** (white-box testing) → derive tests from the implementation itself
+	- Path analysis → cover the branches / paths through the code
+- **Existing test cases** (regression testing) → re-run prior tests after changes to catch reintroduced faults
+- **Faults** → target tests at known fault patterns / past bug reports
+
+## Test Oracles
+
+**How to Know if the Program's Behavior Is Correct?**
+
+- **Test Oracle** → a mechanism for deciding whether a test case execution succeeds or fails
+- Often difficult to automate → knowing the *right* answer can be as hard as computing it
+- Example:
+	- Your test shows `cos(0.5) = 0.87758256189`
+	- Oracle? → how do you decide if that's correct without already having a trusted `cos` implementation?
+
+## Bugs
+
+- All software has bugs
+- Quote: *"All nontrivial code has defects, and the probability of nontrivial defects increases with code size. The more code you use to solve a problem, the harder it gets for someone else to understand what you did and to maintain your code when you have moved on to write still larger programs."* — Holzmann, *Code Inflation* (IEEE SW 2015)
+
+**All Software Has Bugs!**
+
+- Q: What is the required period of failure-free operation for conventional takeoffs and landings of the F35 Joint Strike Fighter?
+	- Answer: **6 hours**
+	- And a recent government report stated that this target had not yet been realized!
+
+**Some Bugs Are Bizarre**
+
+![[Informatics_43-1778782478786.webp|500x273]]
+
+## When Are We Done Testing?
+
+- Aim to reveal as many faults as possible in a fixed period of time with a fixed budget
+- Target specific areas of the system
+- Aim to meet the quality requirements established for the project
+- You can never prove the absence of bugs → "done" is a budget/risk decision, not a mathematical one
+
+![[Informatics_43-1778782499445.webp|500x250]]
+![[Informatics_43-1778782504761.webp|500x268]]
+
+<!-- last cleaned: end of Lecture 14 (Testing: choosing test cases, black/white-box, oracles, bugs, when to stop) -->
