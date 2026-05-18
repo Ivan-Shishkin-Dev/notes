@@ -4,10 +4,13 @@ University course notes vault organized by academic quarter. The user is a CS st
 
 ## Structure
 
-- Root folders are quarters: `Spring 2026/`, `Winter 2026/`
+- All published notes live under `content/` (this is the Quartz content directory — the site builds from here)
+- Inside `content/`, top-level folders are quarters: `content/Spring 2026/`, `content/Winter 2026/`
 - Each course is a **single .md file** per class, using underscores in filenames (e.g., `Informatics_43.md`, `ICS_46.md`, `ICS_51.md`)
 - All lectures for a course live in that one file, appended sequentially
-- `Winter 2026/` contains archived zip files from prior quarter courses
+- `content/Winter 2026/` contains archived zip files from prior quarter courses
+- `content/Pictures/` holds image assets referenced by note embeds
+- Repo root holds Quartz config (`quartz.config.ts`, `quartz.layout.ts`, `package.json`, `quartz/`) and the deploy workflow (`.github/workflows/deploy.yml`) — do not touch these during normal note cleaning
 
 ## Current Courses (Spring 2026)
 
@@ -55,4 +58,8 @@ After **every** edit to notes in this vault, automatically:
 3. `git push`
 
 This is pre-authorized — do not ask for confirmation. Run the three commands as the final step of any note-cleaning task.
+
+## Publishing
+
+Pushing to `main` triggers a GitHub Actions workflow (`.github/workflows/deploy.yml`) that builds the Quartz site and publishes it to <https://ivan-shishkin-dev.github.io/notes/>. No manual deploy step is needed — `git push` is the deploy. Build typically takes ~2 minutes.
 
