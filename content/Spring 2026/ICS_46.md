@@ -3232,4 +3232,242 @@ void heapSort(std::vector<std::string>& vec) {
 - **Merge sort** → divides array in half, sorts each half recursively, then interleave-merges them into a sorted list
 - **Quick sort** → picks a pivot, places it in its final sorted position, then recursively sorts the sub-arrays before and after it
 
-<!-- last cleaned: end of Lecture 11 (Sorting Deep Dive & Heap Sort) -->
+# Lecture 12: Graphs (Intro & Traversal)
+
+**Graphs**
+
+- G = (V, E)
+- V → vertices (or nodes); notation `v ∈ V`
+- E → edges, each connects a pair of vertices
+	- E ⊆ V × V; `(u, v) ∈ E`
+
+**Example Applications**
+
+- Airport system
+	- airports are vertices, flights are edges
+	- "best path" may mean shortest flight time or least expensive
+- Traffic flow
+	- intersection is a vertex, roads are edges
+	- best path could be shortest distance or fastest time
+- Computer network (cable / wire)
+
+**Variations**
+
+- **Undirected** → e.g. electrical wire in a building
+- **Directed** → e.g. streets (one-way or two-way), flights
+- **Weighted edges** → notation `w(u, v)`
+	- e.g. time, cost, or distance for a flight leg
+- **Weighted vertices** also possible
+	- e.g. time spent waiting at an airport, or cost to stay in a hotel
+
+**Undirected Graphs**
+
+- Used when connections are mutual → e.g. social friends
+- **Degree of vertex** → # of edges connected to the vertex
+- [Complete graph](https://en.wikipedia.org/wiki/Complete_graph) → all pairs of vertices are connected
+- [Bipartite graph](https://en.wikipedia.org/wiki/Bipartite_graph) → V = V₁ ∪ V₂ and E ⊆ V₁ × V₂
+	- e.g. jobs and workers, students and classes, people and social clubs
+- [Multigraph](https://en.wikipedia.org/wiki/Multigraph) → can have multiple edges between the same pair of vertices (including self-edges)
+- [Hypergraph](https://en.wikipedia.org/wiki/Hypergraph) → edges can connect more than two vertices
+
+**Trees vs. Graphs**
+
+- What's the difference between a tree and a general graph?
+- A tree is an **acyclic** (NO CYCLES), connected graph with exactly one path between any two nodes — it's also directed
+- Trees have a root; graphs do not
+
+**Directed Graph (Digraph)**
+
+- A → B is **not** the same as B → A
+- **In-degree, out-degree** → # of edges going in or out
+- **Path** → ⟨v₀, v₁, ..., vₖ⟩ where ⟨vᵢ, vᵢ₊₁⟩ ∈ E
+- **Simple path** → path where all vᵢ are distinct
+- **Cycle** → a non-trivial simple path plus ⟨vₖ, v₀⟩ to close it
+- **DAG** → Directed Acyclic Graph (contains no cycles)
+- **Strongly connected** → digraph whose vertices are all reachable from each other
+
+**Representations (IMPORTANT — LEARN AND MASTER)**
+
+- **Adjacency list** → for each node, a list of neighbors along its outgoing edges
+- **Adjacency matrix** → `m[v1, v2]` holds the weight (or 1/0 for unweighted)
+- Trade-offs:
+	- *Adjacency list* → space efficient, easy to grow
+		- array of linked lists, similar to how we did hashing
+	- *Adjacency matrix* → fast O(1) access, but O(V²) space
+		- lots of zeroes if sparse
+		- store cost, or boolean 1 if connected
+		- if sparse (not many edges) → list is the better option
+
+![[ICS_46-1779230236229.webp|500x153]]
+
+- Store a numerical representation of words as tables (preferably integers)
+
+Decision tree → which representation to use?
+
+| | Few edges (sparse) | Many edges (dense) |
+|---|---|---|
+| **Few vertices** | Either works; list slightly leaner | Matrix → fast lookup, small enough |
+| **Many vertices** | **Adjacency list** → matrix wastes O(V²) on zeroes | **Adjacency matrix** → O(1) edge lookup matters more than space |
+
+**Adding Weights**
+
+- *Adjacency list* → store the weight alongside the neighbor (tuple, or extra data member on the edge node)
+- *Adjacency matrix* → store the weight directly in the matrix cell at the crossing
+
+**Graph Search**
+
+- What are some possible ways to search a graph?
+	- Go all the way to the furthest point, back up to the last branch, exhaust that line too, repeat → **DFS**
+	- At each node, go one step out until all paths are exhausted, then advance another step → **BFS**
+	- Could also go randomly
+	- Level-order search (by distance away) → close to BFS
+
+**Breadth First Search (BFS)**
+
+- Analogy → go to university and take ALL the intro courses FIRST; then advance to the next level for each
+- "Distance" → number of vertices in path
+- Visit vertices in increasing order of distance from the starting point
+- Use a **queue** to store vertices "to visit"
+- Not necessarily unique
+- Explore breadth first, then depth
+- May find the shortest distance to some node
+- [Breadth First Search animation](http://www.cs.sunysb.edu/~skiena/combinatorica/animations/search.html)
+
+![[ICS_46-1779233238497.webp|350]]
+
+BFS finds the shortest path (in # of edges) to the solution.
+
+```cpp
+VertexList bfs(const Graph& graph, Vertex startVertex) {
+    VertexList result;
+    // visited[v] → have we already enqueued vertex v? prevents revisiting
+    vector<bool> visited(graph.size(), false);
+    // queue of vertices we've discovered but haven't processed yet
+    queue<Vertex> queue;
+
+    // mark the start as visited and put it in the queue
+    visited[startVertex] = true;
+    queue.push(startVertex);
+
+    while (!queue.empty()) {
+        // grab the next vertex in FIFO order (closest one we haven't done yet)
+        Vertex vertex = queue.front();
+        queue.pop();
+        result.push_back(vertex);
+
+        // look at every neighbor reachable from this vertex (adjacency list)
+        for (Vertex v : graph.edges_from(vertex))
+            if (!visited[v]) {
+                // first time seeing this neighbor → mark and enqueue
+                visited[v] = true;
+                queue.push(v);
+            }
+    }
+    return result;
+}
+```
+
+**Depth First Search (DFS)**
+
+- Less memory than BFS
+- Major example → go as deep as possible in computer science; when you don't get a job you go to medicine; then you become a plumber
+- Explores depth, then neighbors
+- Depth in DFS isn't necessarily the same as distance in BFS
+- Discover vertices before we visit
+- Use a **stack** to store nodes "to visit"
+- DFS order may not be unique!
+- [Depth First Search animation](http://www.cs.sunysb.edu/~skiena/combinatorica/animations/search.html)
+
+```cpp
+VertexList dfs(const Graph& graph, Vertex startVertex) {
+    VertexList result;
+    // visited[v] → have we already pushed vertex v? prevents revisiting
+    vector<bool> visited(graph.size(), false);
+    // stack of vertices we've discovered but haven't processed yet (LIFO)
+    stack<Vertex> stk;
+
+    // mark the start as visited and push it
+    visited[startVertex] = true;
+    stk.push(startVertex);
+
+    while (!stk.empty()) {
+        // grab the most recently pushed vertex (deepest one we've seen)
+        Vertex vertex = stk.top();
+        stk.pop();
+        result.push_back(vertex);
+
+        // look at every neighbor reachable from this vertex
+        for (Vertex v : graph.edges_from(vertex))
+            if (!visited[v]) {
+                // first time seeing this neighbor → mark and push
+                visited[v] = true;
+                stk.push(v);
+            }
+    }
+    return result;
+}
+```
+
+**BFS vs. DFS Tradeoffs**
+
+| | BFS | DFS |
+|---|---|---|
+| Data structure | Queue (FIFO) | Stack (LIFO) — or recursion |
+| Memory | O(branching width) — can blow up on wide graphs | O(depth) — usually much smaller |
+| Finds shortest path? | Yes (in # of edges, unweighted graphs) | No — finds *a* path, not the shortest |
+| Order of visit | Level by level out from source | Down one branch as far as possible before backtracking |
+| Best for | Shortest-path queries, level-by-level work | Cycle detection, topo sort, exhaustive exploration |
+
+**Iterative Deepening DFS**
+
+- NOT MUCH MEMORY *and* SHORTEST SOLUTION
+	- (trade-off → redoing work)
+- Depth-limited version of DFS, run repeatedly with increasing depth limits, until solution is found
+- Optimal like BFS, but uses much less memory
+- [Iterative Deepening](https://en.wikipedia.org/wiki/Iterative_deepening_depth-first_search)
+
+**Topological Sorting**
+
+- Operates on a **Directed Acyclic Graph (DAG)**
+- Produces a sorted order where all of a node's predecessors appear before the node itself
+- Useful when computing some property on a graph that requires computations of predecessors
+- E.g. scheduling tasks that depend on other tasks
+	- Tasks → eat food, cook food, mix food, wash food, buy food
+	- Dependencies → buy → wash → mix → cook → eat
+	- **Topological order** → `[buy, wash, mix, cook, eat]`
+	- **Pre-ordering** (when first discovered): `buy(1), wash(2), mix(3), cook(4), eat(5)`
+	- **Post-ordering** (when finished): `eat(1), cook(2), mix(3), wash(4), buy(5)` → reverse post-order gives topo order
+- End up with levels of stuff — items on the same level can be done in parallel; everything in a level above requires the level under it
+	- Coursework prereqs are the classic example
+
+Topological Sort Algorithm (Kahn's algorithm, in-degree based):
+
+```cpp
+vector<int> topologicalSort(const vector<vector<int>>& graph) {   // adjacency list
+    vector<int> inDegree(graph.size(), 0);
+    vector<int> result;
+    queue<int> q;
+
+    // Calculate in-degree for each vertex
+    for (const auto& edges : graph)
+        for (int vertex : edges)
+            inDegree[vertex]++;
+
+    // Enqueue vertices with in-degree 0 (no prerequisites)
+    for (int i = 0; i < graph.size(); ++i)
+        if (inDegree[i] == 0)
+            q.push(i);
+
+    while (!q.empty()) {
+        int currVertex = q.front(); q.pop();
+        result.push_back(currVertex);
+        // Decrease in-degree of adjacent vertices; if any hit 0, they're ready
+        for (int adjVertex : graph[currVertex])
+            if (--inDegree[adjVertex] == 0)
+                q.push(adjVertex);
+    }
+    return result;
+}
+```
+
+<!-- last cleaned: end of Lecture 12 (Graphs Intro: BFS, DFS, Iterative Deepening, Topological Sort) -->
