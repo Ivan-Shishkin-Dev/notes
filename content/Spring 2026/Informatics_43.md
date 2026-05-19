@@ -1822,4 +1822,148 @@ int multiplier(int a, int b) {
 ![[Informatics_43-1778782499445.webp|500x250]]
 ![[Informatics_43-1778782504761.webp|500x268]]
 
-<!-- last cleaned: end of Lecture 14 (Testing: choosing test cases, black/white-box, oracles, bugs, when to stop) -->
+# Lecture 15: How Do We Choose Test Cases?
+
+**Last Time**
+
+- Testing can never be exhaustive
+- Testing can never prove a system's correctness
+- All software has bugs!
+
+## Black-Box vs White-Box Testing
+
+**Black-Box (Specification-Based) Testing**
+
+- Functional testing
+- Specification-based testing
+
+![[Informatics_43-1779213862277.webp|500x208]]
+
+**White-Box Testing**
+
+- Structural testing
+- Code-based testing
+
+![[Informatics_43-1779213870377.webp|500x243]]
+
+## Black-Box / Specification-Based Testing
+
+- Use specifications to derive test cases
+- Choose test cases that guarantee a wide range of coverage
+	- Typical values
+	- Boundary values
+	- Special cases
+	- Invalid input values
+	- Combinations of values
+
+**Equivalence Class Partitioning**
+
+- Divide the input into several classes that are considered "equivalent" for the purposes of finding errors
+	- If it fails/passes for one member of the class, it is likely to fail/pass for all members
+- Classes are determined by:
+	- Looking at the requirements specification
+	- Tester's intuition
+- Classes:
+	- Should cover the complete input domain
+	- Should not overlap
+
+**Boundary Value Analysis**
+
+- Experience has shown that many errors are made at the "boundaries" rather than normal conditions
+	- "Edge cases" is another name
+	- EX: confusion between `<` and `<=`
+- Boundary value analysis uses the same classes as equivalence partitioning, but tests at the boundaries of the classes rather than just any element from the class
+
+**Equivalence Class Partitioning / BVA: A Systematic Approach**
+
+1. Identify the set of all possible inputs (to what is being tested) → AKA the "domain"
+2. Identify a basis for subdividing the set of inputs
+	- Possible bases:
+		- Size / magnitude
+		- Structure
+		- Correctness
+		- Your creative thinking / intuition
+3. Use this basis to divide the set of all possible inputs into classes / subdomains
+4. From each subdomain, select representative(s) to be test case input(s)
+	- One test case may suffice
+5. Test for each subdomain:
+	- "Normal" or "representative" values (anywhere within the subdomain / range)
+	- Boundary or edge input values (boundary value analysis)
+
+**Example: Letter Grade Program**
+
+Program takes a single assignment score from 0 to 100 (integer) and returns a letter grade → 90s = A, 80s = B, 70s = C, 60s = D, 50s and lower = F (no plusses/minuses).
+
+- Partitions of the single input:
+	- Invalid low → score < 0
+	- F → 0–59
+	- D → 60–69
+	- C → 70–79
+	- B → 80–89
+	- A → 90–100
+	- Invalid high → score > 100
+- Boundary values per partition:
+	- Invalid low → -1
+	- F → 0, 59
+	- D → 60, 69
+	- C → 70, 79
+	- B → 80, 89
+	- A → 90, 100
+	- Invalid high → 101
+- Test cases (input, expected output):
+	- -1, invalid / error
+	- 0, F
+	- 59, F
+	- 60, D
+	- 69, D
+	- 70, C
+	- 79, C
+	- 80, B
+	- 89, B
+	- 90, A
+	- 100, A
+	- 101, invalid / error
+
+**Combinatorial Testing**
+
+- If there are multiple parameters, and each has its own equivalence partitions, how do we combine the values within each partition, for each parameter?
+- Treat each parameter the same as we did with equivalence class partitioning:
+	- For each parameter, determine the partitions and representative (possibly boundary) values
+	- Then, with these values for each parameter, devise combinations of them
+
+## White-Box / Structural Testing
+
+- Use source code to derive test cases
+- Build a graph model of the system
+- State test cases in terms of graph coverage
+- Choose test cases that guarantee different types of coverage:
+	- Statement (node) coverage
+	- Branch (edge) coverage
+	- Condition coverage
+	- Method coverage
+	- Method-call coverage
+	- Path coverage
+
+**Example 1: Building the Control-Flow Graph**
+
+```cpp
+def getSecondElement():
+1   head = getHead()
+2   if head == null:
+3       return null
+4   if head.next == null:
+5       return null
+6   return head.next.node
+```
+
+![[Informatics_43-1779214239139.webp|500x852]]
+
+- Every control-flow graph includes an "entry" and an "exit" node
+	- Entry node → represents all control flow that comes into the function
+	- Exit node → represents all outgoing control flow from the function
+- Each node relates to an atomic instruction → in general, maps to a single line of code
+- Each edge is directed (i.e., has an arrow on one end) from where control flows from, to where it goes
+- Any node that has 2 or more outgoing edges → those edges need to be labeled based on the condition that chooses that path ("T" or "F" for predicates, the value for switch statements)
+	- When there are 2 or more outgoing edges, these edges are called "branches"
+
+<!-- last cleaned: end of Lecture 15 (Choosing test cases: black-box vs white-box, equivalence partitioning, BVA, combinatorial testing, control-flow graphs) -->
