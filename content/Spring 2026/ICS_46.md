@@ -3470,4 +3470,131 @@ vector<int> topologicalSort(const vector<vector<int>>& graph) {   // adjacency l
 }
 ```
 
-<!-- last cleaned: end of Lecture 12 (Graphs Intro: BFS, DFS, Iterative Deepening, Topological Sort) -->
+# Lecture 13: Minimum Spanning Trees (Prim's, Kruskal's, Disjoint Sets)
+
+**Minimum Spanning Trees (MST)**
+
+- *Spanning tree*
+	- **spanning** → connects every vertex
+	- **tree** → acyclic (no cycle)
+	- Start with a connected, undirected, edge-weighted graph G
+	- A sub-graph with a subset of edges that connects all vertices
+	- |E| = |V| − 1 → edges is vertices minus one
+- *Minimum spanning tree*
+	- Sum total of edge weights is minimized
+	- Edge weights need not be distinct → MST need not be unique
+- Example → wiring a house with minimal cable
+
+ACTIVITY → what are some possible approaches?
+- Check all possible spanning trees and select the shortest one
+- Pick the shortest edge first and try to grow from there
+- Choose the shortest path → O(N²)
+
+**MST Algorithms**
+
+- Two common ones
+	- [Prim's](https://en.wikipedia.org/wiki/Prim%27s_algorithm)
+	- [Kruskal's](https://en.wikipedia.org/wiki/Kruskal%27s_algorithm)
+- Both are **greedy algorithms** → take the best choice at each opportunity
+- Difference is in *how* the next edge is selected
+
+**Prim's Algorithm**
+
+- Grows a *single* tree
+- Start with a single vertex, called the **root**
+- Select the minimum edge connecting (u, v) such that u is already in the spanning tree and v is not
+- Grow MST by adding one vertex and one edge at a time
+- O(|V|²) without heaps for the priority queue
+- O(|E| log |V|) with heaps
+
+NEW NAME (behind me, allergies) → Josiah
+
+**Kruskal's Algorithm**
+
+- Grows a *set* of trees (a forest that eventually merges)
+- Start with |V| single-node trees
+- Identify the next cheapest edge
+- If the edge links *two different trees* → add it to the MST
+	- Adding an edge joins two trees into one
+- [Minimum spanning tree animation](https://www3.cs.stonybrook.edu/~skiena/combinatorica/animations/mst.html)
+- O(|E| log |V|) → much better in practice
+
+**Disjoint Set**
+
+- *Disjoint-set*
+	- Needed for Kruskal's MST algorithm
+	- Answers → are two vertices in the same tree (same set)?
+- ACTIVITY → how can we implement union/find for disjoint sets?
+- Three operations → `make_set()`, `union(u, v)`, `find(v)`
+	- `make_set` → make a node whose parent points at itself; do this for every vertex → n disjoint sets to start
+	- `find(v)` → who is your representative node? Returns the address of the last node in the chain — should be one step away, since WE ALL POINT TO ONE
+	- `union(u, v)` → joins two sets together (collapse them so both point to one leader)
+
+**Disjoint-Set Data Structure**
+
+- AKA
+	- *union-find* data structure, or
+	- *merge-find set*
+- [Wikipedia → Disjoint-set data structure](https://en.wikipedia.org/wiki/Disjoint-set_data_structure)
+
+**Union-Find Disjoint Sets**
+
+- "Disjoint set" means the sets share no elements
+- Create a mapping from vertices (ints) to nodes
+	- `make_set(v)` → easy with a vector inside a class
+	- For N items → N linked lists of length 1
+	- Set the parent of each node to point to itself
+- `find(v)` → returns the last node in the list
+	- The node's address acts as the set's identity
+- `union(u, v)` → joins two disjoint sets together
+	- `find(u).parent = find(v)`
+
+Drawback → linked lists can grow long for large sets!
+
+Performance improvements (apply in order):
+1. *Union by size/rank* → always have the shorter list point to the root of the longer list
+2. *Path compression* → every time we do `union()` or `find()`, set the parent to the result returned by `find(v)` so future lookups are O(1)
+
+**Union-Find Disjoint Sets — Resources**
+
+- [Explanation video](https://www.youtube.com/watch?v=ayW5B2W9hfo)
+- [Interactive animation](https://www.cs.usfca.edu/~galles/visualization/DisjointSets.html)
+
+**Kruskal's Algorithm in C++**
+
+```cpp
+// Edge with two endpoints and a weight
+struct Edge {
+    int u, v;
+    int weight;
+};
+
+vector<Edge> kruskalMST(int numVertices, vector<Edge>& edges) {
+    vector<Edge> mst;
+
+    // 1. Sort edges by weight, ascending → cheapest first
+    sort(edges.begin(), edges.end(),
+         [](const Edge& a, const Edge& b) { return a.weight < b.weight; });
+
+    // 2. Start with each vertex in its own set
+    DisjointSet ds(numVertices);
+
+    // 3. Walk edges cheapest → most expensive
+    for (const Edge& e : edges) {
+        // If u and v are already connected, adding this edge would form a cycle → skip
+        if (ds.find(e.u) != ds.find(e.v)) {
+            mst.push_back(e);          // edge links two different trees → take it
+            ds.unionSets(e.u, e.v);    // merge the two trees into one
+            if (mst.size() == numVertices - 1) break;  // MST has |V| − 1 edges, done
+        }
+    }
+    return mst;
+}
+```
+
+**Kruskal Example**
+
+![[ICS_46-1779404376737.webp|500x281]]
+
+<!-- last cleaned: end of Lecture 13 (Minimum Spanning Trees: Prim's, Kruskal's, Disjoint Sets / Union-Find) -->
+
