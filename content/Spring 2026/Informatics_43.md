@@ -1966,4 +1966,213 @@ def getSecondElement():
 - Any node that has 2 or more outgoing edges → those edges need to be labeled based on the condition that chooses that path ("T" or "F" for predicates, the value for switch statements)
 	- When there are 2 or more outgoing edges, these edges are called "branches"
 
-<!-- last cleaned: end of Lecture 15 (Choosing test cases: black-box vs white-box, equivalence partitioning, BVA, combinatorial testing, control-flow graphs) -->
+# Lecture 16: How Do We Choose Test Cases?
+
+**Last Time**
+
+- Black-box testing → uses specifications to derive test cases
+- Equivalence class partitioning + boundary value analysis → choose test cases that guarantee a wide range of coverage
+	- Typical values, boundary values, special cases, invalid input
+- Combinatorial testing → creates combinations of inputs
+
+**White-Box (Structural) Testing**
+
+![[Informatics_43-1779386866076.webp|500x253]]
+
+- Use source code to derive test cases
+- Build a graph model of the system
+- State test cases in terms of graph coverage
+- Choose test cases that guarantee different types of coverage:
+	- Statement (node) coverage
+	- Branch (edge) coverage
+	- Condition coverage
+	- Method coverage
+	- Method-call coverage
+	- Path coverage
+
+**Example 1: Building the Control-Flow Graph**
+
+```cpp
+def getSecondElement():
+1   head = getHead()
+2   if head == null:
+3       return null
+4   if head.next == null:
+5       return null
+6   return head.next.node
+```
+
+![[Informatics_43-1779386907336.webp|500x1042]]
+
+**Control-Flow Graphs (recap from [[Informatics_43#Lecture 15: Choosing Test Cases|Lecture 15]])**
+
+- Entry and exit nodes bookend the function → entry = all incoming control flow, exit = all outgoing
+- Each node = atomic instruction (≈ a single line of code)
+- Each edge is directed → from where control comes, to where it goes
+- Any node with 2+ outgoing edges → label each edge with the condition that chooses it ("T"/"F" for predicates, the value for switch statements)
+
+**Statement Coverage**
+
+- Select test cases such that every node in the graph is visited → also called node coverage
+- Set of test-case inputs that achieves statement coverage (for the `getSecondElement` graph above):
+	1. `{null, 2, 4}`
+	2. `{5, null, 8, 7}`
+	3. `{9, 2}`
+
+**Branch Coverage**
+
+- Select test cases such that every branch in the graph is visited → also called edge coverage
+- More thorough than statement coverage → more likely to reveal logical errors
+- Set of test cases that achieves branch coverage (for the `getSecondElement` graph above):
+	1. `{null, 2, 4}`
+	2. `{5, null, 8, 7}`
+	3. `{9, 2}`
+
+**Example 2: Statement vs. Branch Coverage**
+
+```cpp
+int m(int i) {
+1       r = 1;
+2       if ( (i%2) == 0 ) {
+3           r = r * 3;
+4           if ( (i%4) == 0 ) {
+5               r = r * 5;
+            }
+        } else {
+6           if ( (i%3) == 0 ) {
+7               r = r * 7;
+8               if ( (i%9) == 0 ) {
+9                   r = r * 11;
+                }
+            }
+        }
+10      return r;
+}
+```
+
+Statement coverage → only 2 inputs needed to hit every numbered statement:
+
+| Test input | Expected output | S1 | S2 | S3 | S4 | S5 | S6 | S7 | S8 | S9 | S10 |
+|------------|-----------------|----|----|----|----|----|----|----|----|----|-----|
+| `i = 4`    | `15`            | ✓  | ✓  | ✓  | ✓  | ✓  |    |    |    |    | ✓   |
+| `i = 9`    | `77`            | ✓  | ✓  |    |    |    | ✓  | ✓  | ✓  | ✓  | ✓   |
+
+Branch coverage → needs 5 inputs to hit every T/F edge out of nodes 2, 4, 6, and 8:
+
+| Test input | Expected output | 2T | 2F | 4T | 4F | 6T | 6F | 8T | 8F |
+|------------|-----------------|----|----|----|----|----|----|----|----|
+| `i = 4`    | `15`            | ✓  |    | ✓  |    |    |    |    |    |
+| `i = 2`    | `3`             | ✓  |    |    | ✓  |    |    |    |    |
+| `i = 9`    | `77`            |    | ✓  |    |    | ✓  |    | ✓  |    |
+| `i = 3`    | `7`             |    | ✓  |    |    | ✓  |    |    | ✓  |
+| `i = 5`    | `1`             |    | ✓  |    |    |    | ✓  |    |    |
+
+→ Branch coverage subsumes statement coverage here → 5 tests vs. 2, and catches logical errors statement coverage would miss (e.g., a flipped predicate on node 4 or 8)
+
+**Other Coverage Criteria**
+
+- Condition coverage → select test cases such that all conditions are tested individually
+	- e.g., `if (a > b || c > d) ...` → test both `a > b` and `c > d` true/false on their own, not just the combined expression
+- Method coverage → make sure every method has been executed
+- Method-call coverage → make sure every method-call site reaches every method (considering all possible polymorphic calls)
+- Data-flow coverage → every variable assignment reaches all of its reachable uses
+
+**Path Coverage**
+
+- Select test cases such that every path in the graph is visited
+- Loops are a problem → typically test 0, 1, average, and max iterations
+- Most thorough... but is it feasible?
+	- Number of paths explodes combinatorially → often infeasible for real programs
+
+**Challenges with White-Box Testing**
+
+- Can be useful for identifying under-tested parts of a program
+- Can cover all nodes or edges without revealing obvious faults
+- Some nodes, edges, or loop combinations may be infeasible (dead code, unreachable branches)
+
+**Inspections and Reviews**
+
+- Humans read documents and look for defects → effective
+- Benefits:
+	- Improve code quality
+	- Improve code understandability
+	- Find defects
+	- Transfer knowledge
+	- Explore alternative solutions
+	- Improve the development process
+	- Avoid breaking builds
+	- Increase team awareness
+	- Share code ownership
+	- Team assessment
+
+**Formal Methods**
+
+- Proofs of correctness
+- Note: verification only (does the code match the spec?), not validation (is the spec the right thing?)
+- Usually done with formal specifications
+
+**Static Analysis**
+
+- A computer program analyzes source code and finds possible defects → without running the code
+- Results are reviewed by a human → many warnings aren't actual problems (false positives)
+
+**Static Analyzer (FindBugs)**
+
+- FindBugs → static analyzer for Java bytecode that scans for known bug patterns
+- Findings are organized by category (e.g., "Suspicious calls to generic comparison methods", "equals() comparisons"), bug kind, bug pattern, and priority
+- For each finding, the tool shows:
+	- The offending line of source highlighted in context
+	- A natural-language explanation of *why* the pattern is buggy → e.g., calling `equals()` between unrelated class and interface types is guaranteed to return `false` at runtime per the `Object.equals` contract
+	- A severity ranking so the reviewer can triage "must fix" vs. low-priority warnings
+- Output is reviewed by a human → static analyzers flag *possible* defects, not confirmed ones
+
+![[Informatics_43-1779387257580.webp|500x304]]
+
+**Testing: A Look Back**
+
+- Quality assurance
+	- Testing
+	- Black-box (specification-based) testing → equivalence class partitioning, representative + boundary values, combinatorial testing
+	- White-box (structural) testing → statement/node coverage, branch/edge coverage
+	- Miscellaneous: inspections and reviews, formal methods, static analysis
+
+**Not Covered**
+
+- Regression testing
+- Integration testing
+- Interaction testing (mocking)
+- Debugging
+- Mutation testing
+- Fuzz testing
+- Exploratory testing
+- ...
+
+**Summary**
+
+- White-box testing uses program graphs derived from source code to derive test cases
+- In white-box testing we choose test cases to achieve different types of coverage → statement, branch, condition, path
+- Other approaches to QA → inspections/reviews, formal methods, static analysis
+
+**Quiz 7 Study Guide**
+
+Testing fundamentals
+- Validation vs. verification → "are we building the right thing?" vs. "are we building it right?"
+- Error → human mistake; Fault → defect in code/spec; Failure → observable misbehavior at runtime
+- Testing goals, including Dijkstra's quote → "testing can show the presence of bugs, but never their absence"
+- Levels of testing → unit, integration, system, acceptance
+- Oracles → mechanism for deciding whether a test passed (spec, reference implementation, gold output, human judgment, metamorphic relation)
+- Different ways to know when we are done testing → coverage thresholds met, defect-discovery rate flattening, time/budget exhausted, risk-based stopping criteria
+
+Black-box testing
+- Equivalence class partitioning → divide the input domain into classes that should behave the same, pick one representative per class
+- Boundary value analysis → test at and just outside the edges of each equivalence class
+- Combinatorial testing → cover all pairs (or k-tuples) of input combinations rather than the full Cartesian product
+
+White-box testing
+- Statement/node coverage → every node in the CFG executed at least once
+- Branch/edge coverage → every outgoing edge from every decision point taken at least once
+- Control-flow graphs → entry/exit nodes, atomic instructions per node, labeled T/F branches
+- Code inspections → human-driven defect detection, complements automated testing
+- Static analyzers → automated pattern-matching over source/bytecode (e.g., FindBugs) — flags possible defects for human review
+
+<!-- last cleaned: end of Lecture 16 (How to choose test cases: white-box testing, Example 2 trace with statement vs. branch coverage tables, path/condition/method coverage, inspections, formal methods, FindBugs static analysis, Quiz 7 study guide) -->
