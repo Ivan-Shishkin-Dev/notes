@@ -3594,7 +3594,139 @@ vector<Edge> kruskalMST(int numVertices, vector<Edge>& edges) {
 
 **Kruskal Example**
 
-![[ICS_46-1779404376737.webp|500x281]]
+![[ICS_46-1779404376737.webp|414x232]]
 
-<!-- last cleaned: end of Lecture 13 (Minimum Spanning Trees: Prim's, Kruskal's, Disjoint Sets / Union-Find) -->
+# Lecture 14: Single-Source Shortest Path (Dijkstra's, Word Ladder)
+
+**More Graph Problems**
+
+- *Unweighted graphs* → BFS / DFS for traversal and reachability
+- *Directed Acyclic Graphs (DAGs)* → topological sort to order tasks by dependency
+- *Weighted graphs*
+	- **Minimum spanning tree** → cheapest set of edges connecting every vertex (covered in Lecture 13)
+	- **Single-source shortest path** → cheapest path from one start vertex to every other
+	- **Traveling salesman problem** → shortest tour that visits every vertex exactly once (NP-hard)
+- *Network flow*
+	- **Maximum flow** → most "stuff" you can push from a source to a sink under edge capacities
+- *Heuristic* → rule-of-thumb to narrow the search space
+	- "Control the center" is a heuristic for picking a good opening move in chess
+
+**Single-Source Shortest Path (SSSP)**
+
+- Given
+	- A graph G = (V, E)
+	- A single starting vertex s
+- Find the lowest-cost path from s to every other vertex
+- For *unweighted* graphs → BFS (every edge treated as cost 1)
+- For *weighted* graphs → several choices
+	- **[Dijkstra's algorithm](https://www.youtube.com/watch?v=pVfj6mxhdMw)** → only positive weights
+	- **Bellman-Ford** → handles negative weights too, O(|V|·|E|)
+	- **[A*](https://www.youtube.com/watch?v=eSOJ3ARN5FM)** → heuristic-guided; needs an upper-bound distance estimate to the goal
+		- GPS routing uses A* with straight-line Euclidean distance as the heuristic
+		- An example of *best-first search*
+
+**Applications**
+
+- Maze games
+- Street routing (driving directions)
+- Trip planning
+- Network packet routing
+- Robots navigating around obstacles
+- [Dijkstra animation](https://www3.cs.stonybrook.edu/~skiena/combinatorica/animations/dijkstra.html)
+- [Example 1](https://www.youtube.com/watch?v=0nVYi3o161A) · [Example 2](https://www.youtube.com/watch?v=5GT5hYzjNoo)
+
+**Naive Brute-Force Shortest Path**
+
+- Enumerate every simple path from s to t and take the minimum
+- Explodes combinatorially → useless beyond toy sizes, but shows what "correct" looks like
+
+```cpp
+// Try every simple path from s to t via DFS, track the smallest total weight
+// graph[u] = list of (neighbor, weight) pairs
+int bruteForceSSSP(const vector<vector<pair<int,int>>>& graph, int s, int t) {
+    int n = graph.size();
+    vector<bool> visited(n, false);
+    int best = INT_MAX;
+
+    function<void(int, int)> dfs = [&](int u, int cost) {
+        if (u == t) { best = min(best, cost); return; }
+        visited[u] = true;
+        for (auto [v, w] : graph[u])
+            if (!visited[v]) dfs(v, cost + w);
+        visited[u] = false;  // backtrack so other paths can still go through v
+    };
+
+    dfs(s, 0);
+    return best;
+}
+```
+
+**Dijkstra's Algorithm**
+
+- A *greedy* algorithm, published by Edsger Dijkstra in 1959
+- Maintain distance estimates to every neighbor of s
+- Repeatedly pull the unvisited vertex with the *shortest known distance*, add it to the visited set, then relax (update) the distances of its neighbors
+- Does **not** work on graphs with negative edge weights
+- O((|E| + |V|) log |V|) with a binary heap as the priority queue
+
+```cpp
+// Dijkstra's SSSP on a non-negative weighted graph
+// graph[u] = list of (neighbor, weight) pairs
+// Returns shortest distance from s to every vertex
+vector<int> dijkstra(const vector<vector<pair<int,int>>>& graph, int s) {
+    int n = graph.size();
+    vector<int> dist(n, INT_MAX);
+    dist[s] = 0;
+
+    // Min-heap of (distance_so_far, vertex)
+    priority_queue<pair<int,int>, vector<pair<int,int>>, greater<>> pq;
+    pq.push({0, s});
+
+    while (!pq.empty()) {
+        auto [d, u] = pq.top(); pq.pop();
+        if (d > dist[u]) continue;  // stale entry — already found a shorter path to u
+
+        // Relax each outgoing edge of u
+        for (auto [v, w] : graph[u]) {
+            if (dist[u] + w < dist[v]) {
+                dist[v] = dist[u] + w;
+                pq.push({dist[v], v});
+            }
+        }
+    }
+    return dist;
+}
+```
+
+- [Walkthrough 1](https://www.youtube.com/watch?v=k0jStC6nopU) · [Walkthrough 2](https://www.youtube.com/watch?v=8Ls1RqHCOPw)
+- **HW9** → read the same graphs from HW8, but compute Dijkstra's
+	- Output the path *and* total cost to each vertex from the start
+	- Be able to answer questions like → "what is the cost from start to vertex K?"
+
+**Word Ladder Problem**
+
+- [LeetCode (medium/hard)](https://leetcode.com/problems/word-ladder/) · [GeeksforGeeks](https://www.geeksforgeeks.org/dsa/word-ladder-length-of-shortest-chain-to-reach-a-target-word/)
+- A *transformation sequence* from `beginWord` to `endWord` using a dictionary `wordList` is a sequence
+	- `beginWord → s₁ → s₂ → ... → sₖ → endWord`
+	- such that
+		- every adjacent pair of words differs by a single letter (or one insert/delete)
+		- every sᵢ (for 1 ≤ i ≤ k) is in `wordList`
+		- `beginWord` need *not* be in `wordList`, but `endWord` must be
+- The problem → find the *shortest* such transformation sequence
+
+![[ICS_46-1779836071299.webp|500x336]]
+
+**Word Ladder Videos**
+
+- [Nick White](https://www.youtube.com/watch?v=M9cVl4d0v04)
+- [NeetCode](https://www.youtube.com/watch?v=h9iTnkgv05E)
+
+**Solution Sketch**
+
+- A solution uses **breadth-first search**
+	- Queue holds stacks (each stack is a candidate ladder so far), implemented with `vector`
+	- Maintain a `set` of words already used so we don't revisit and loop forever
+- BFS guarantees the *first* time we pop `endWord` off the queue, we've found a shortest ladder
+
+<!-- last cleaned: end of Lecture 14 (Single-Source Shortest Path: Dijkstra's, Word Ladder) -->
 
