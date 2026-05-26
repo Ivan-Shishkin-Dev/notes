@@ -2175,4 +2175,163 @@ White-box testing
 - Code inspections → human-driven defect detection, complements automated testing
 - Static analyzers → automated pattern-matching over source/bytecode (e.g., FindBugs) — flags possible defects for human review
 
-<!-- last cleaned: end of Lecture 16 (How to choose test cases: white-box testing, Example 2 trace with statement vs. branch coverage tables, path/condition/method coverage, inspections, formal methods, FindBugs static analysis, Quiz 7 study guide) -->
+# Lecture 17: Software Process Models
+
+What process do we follow to develop software?
+
+**Last Time**
+- White-box testing uses program graphs derived from source code to derive test cases
+- In white-box testing we choose test cases to achieve different types of coverage → node, edge, loop, condition, path
+- Other approaches to QA → inspections/reviews, formal methods, static analysis
+
+**Difficulties of Software Engineering**
+
+Essential qualities (Brooks):
+- Complexity
+- Conformity
+- Changeability
+- Invisibility
+- Potentially drastic or disastrous consequences
+
+→ Software engineering is hard, and we need processes to help
+
+**Process as a Remedy**
+- Software is engineered via a defined process
+	- Make sure we do the right things / we do things right / do not forget anything
+- Different processes for different kinds of software / companies / situations
+- Not a silver bullet [Brooks, "No Silver Bullet"]
+
+**What is a Model?**
+- Model = simplified representation (not "ideal")
+- Architecture model
+	- Layered
+	- Client-server
+	- Model-View-Controller
+- Software process model
+	- Waterfall
+	- Rapid prototyping
+	- Spiral
+
+**What is a Software Process Model For?**
+- Prescriptive → enforcing rules
+- Descriptive → serving to describe or characterize
+
+**Software Life Cycle Models**
+
+A software life cycle model is a high-level representation of the activities, artifacts, and ordering involved in developing software.
+
+Models covered:
+- Build and fix
+- Waterfall
+- Rapid prototyping
+- Incremental
+- Spiral
+- Rational Unified Process (RUP)
+- Extreme Programming (XP)
+- Agile
+
+**Build and Fix Model**
+
+![[Informatics_43-1779819131165.webp|500x281]]
+
+Strengths and Weaknesses
+- Strengths
+	- Good for small programs that do not require much maintenance or many devs
+- Weaknesses
+	- Not rigorous enough for non-trivial projects
+
+**Waterfall**
+
+![[Informatics_43-1779819166948.webp|500x424]]
+
+Strengths
+- Promotes understanding of requirements first
+- Disciplined, rigorous, formal
+- Lots of documentation
+- Good for projects with well-understood requirements that are unlikely to change
+- Provided a starting point for other software process models
+
+Weaknesses
+- Rigid, not amenable to change
+- Limited user input
+- Bad for projects with any ambiguity in requirements or technology
+- Often run out of time for testing
+- Healthcare.gov → https://www.youtube.com/watch?v=FqkQrPmsP2w
+
+> "The waterfall model amounts to a pledge by all parties not to learn anything while doing the actual work."
+> — Clay Shirky, "Healthcare.gov and the Gulf between Planning and Reality," blog, 2013
+
+**Rapid Prototyping**
+
+![[Informatics_43-1779819199441.webp|500x362]]
+
+**Incremental**
+
+![[Informatics_43-1779819207817.webp|500x364]]
+![[Informatics_43-1779819213546.webp|500x372]]
+
+Case Study: Microsoft evolves their software process
+- Before (Windows 8 and earlier)
+	- "TA-DA" approach → big-bang release
+- After (Windows 10)
+	- Iterative
+	- User feedback
+	- A/B testing
+
+**Spiral**
+
+![[Informatics_43-1779819265480.webp|500x323]]
+
+Software Risks: Some of Boehm's Top 10
+
+| Risk | Risk Management Techniques |
+| --- | --- |
+| Personnel shortfalls | Staff with top talent, job matching, morale building |
+| Unrealistic schedules and budgets | Detailed cost/schedule estimation, reuse, incremental development |
+| Developing the wrong software functions | User surveys, prototyping |
+| Continuing stream of software changes | Information hiding, incremental development |
+| Shortfalls in externally furnished components | Compatibility analysis |
+| Shortfalls in externally performed tasks | Reference checking, competitive design or prototyping |
+
+*Adapted from Hans Schaefer's "Software Risk Management: A Calculated Gamble"*
+
+Strengths and Weaknesses
+- Strengths
+	- Good for new projects with uncertain, complex requirements
+	- Riskiest parts get developed first
+- Weaknesses
+	- Developers have to be competent at risk analysis
+	- "End of project" may not be known
+
+**Rational Unified Process (RUP)**
+- Use case driven
+- Architecture centric
+- Iterative and incremental
+
+![[Informatics_43-1779819322043.webp|500x374]]
+![[Informatics_43-1779819327359.webp|500x496]]
+![[Informatics_43-1779819333025.webp|500x408]]
+![[Informatics_43-1779819338243.webp|500x363]]
+
+Strengths and Weaknesses
+- Strengths
+	- Risk-driven, incremental
+	- Lots of tool support
+	- Provides a lot of guidance
+- Weaknesses
+	- Heavyweight (Very!)
+	- Complicated (need special expertise to implement it)
+
+**Summary**
+- Software engineering is hard, and we need software process models to help
+- Process models prescribe and describe what we do to develop software
+- They help us apply rigor to software development
+- Models covered today
+	- Build and fix
+	- Waterfall
+	- Rapid prototyping
+	- Incremental
+	- Spiral
+	- Rational Unified Process
+
+<!-- last cleaned: end of Lecture 17 (Software Process Models: Brooks essential difficulties, prescriptive vs descriptive models, build-and-fix, waterfall, rapid prototyping, incremental, Microsoft Windows 8→10 case study, spiral with Boehm's Top 10 risks table, RUP) -->
