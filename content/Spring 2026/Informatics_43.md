@@ -2334,4 +2334,122 @@ Strengths and Weaknesses
 	- Spiral
 	- Rational Unified Process
 
-<!-- last cleaned: end of Lecture 17 (Software Process Models: Brooks essential difficulties, prescriptive vs descriptive models, build-and-fix, waterfall, rapid prototyping, incremental, Microsoft Windows 8→10 case study, spiral with Boehm's Top 10 risks table, RUP) -->
+# Lecture 18: What Process Do We Follow to Develop Software? (RUP, XP, Agile)
+
+**Last Time**
+- Software engineering is hard, and we need software process models to help
+	- Prescribe and describe what we do to develop software
+	- Help us apply rigor to software development
+- Models covered so far → build-and-fix, waterfall, rapid prototyping, incremental, spiral
+
+**Rational Unified Process (RUP) — Continued**
+- Use case driven
+- Architecture centric
+- Iterative and incremental
+
+RUP Workflow: Architectural Analysis
+![[Informatics_43-1779991502448.webp|500x647]]
+
+RUP Workflow: Analysis & Design
+![[Informatics_43-1779991525891.webp|500x339]]
+
+RUP Workflow: Use Case Analysis
+![[Informatics_43-1779991536622.webp|500x254]]
+
+Strengths and Weaknesses
+- Strengths
+	- Risk-driven, incremental
+	- Lots of tool support
+	- Provides a lot of guidance
+- Weaknesses
+	- Heavyweight
+	- Complicated (need special expertise to implement it)
+
+**Extreme Programming (XP)**
+
+An "extreme" reaction to waterfall and other heavyweight/traditional processes, which usually have:
+- Lengthy development times
+- Inability to cope with changing requirements
+- Assumption that requirements are completely understood before the project begins
+- Too much reliance on heroic development effort
+- Complex methodology
+- Waste/duplication of effort
+
+→ I guess thats not good
+
+XP Practices and Principles
+- **Whole team** → customer, developers, and testers all work together as one cohesive group
+- **Small releases** → ship working software frequently in small increments, not in one big drop
+- **Customer tests** → customer specifies acceptance tests that define "done" for each feature
+- **Simple design** → build the simplest thing that could work; no speculative generality
+- **Pair programming** → two developers at one keyboard; one drives, the other reviews in real time
+- **Test-driven development** → write the failing test first, then code to make it pass, then refactor
+- **Design improvement** → continuous refactoring to keep the design clean as the code evolves
+- **Continuous integration** → integrate and build many times a day to catch conflicts early
+- **Collective code ownership** → anyone can change any code; no "this is my module" silos
+- **Coding standards** → shared style/conventions so anyone can read and modify any code
+- **Sustainable pace / developer welfare** → no crunch; team works hours they can keep up indefinitely
+- **Open space** → shared physical workspace to enable osmotic communication
+- **Shared understanding** → everyone knows the system's goals, design, and current state
+- **Rapid, fine feedback** → tight feedback loops at every level (tests, pairs, customer, build)
+
+XP Process Steps
+- Determine the desired features (stories)
+- Estimate, prioritize, refine
+- Implement/deliver each task, typically using…
+	- Test-driven development
+	- Pair programming
+- Follow values and principles
+
+**From XP to Agile**
+- Agile includes and evolved from → Extreme Programming, Scrum, Crystal, Kanban, others
+- The Agile Manifesto (2001) → "We have come to value…"
+	- Individuals and interactions **over** processes and tools
+	- Working software **over** comprehensive documentation
+	- Customer collaboration **over** contract negotiation
+	- Responding to change **over** following a plan
+
+Some Agile Principles
+- Welcome change in requirements
+- Business people and developers work together daily throughout the project
+- Build projects around motivated individuals
+- Face-to-face conversation is the best way to convey information
+- Documentation is just a means to an end
+- Continuous delivery
+
+**Ziv's Law**
+- Software development is unpredictable and the documented artifacts such as requirements will never be fully understood
+- Uncertainty is inherent and inevitable in SE processes and products!
+
+Agile Strengths and Weaknesses
+- Strengths
+	- Customer (and developer) satisfaction
+	- Adaptable to changing circumstances
+	- Good for projects with unclear, changing requirements
+	- Good for small teams
+- Weaknesses
+	- Lack of documentation
+	- Unstable requirements
+	- Technical debt
+	- Original agile ideas not ideal for large teams, safety-critical requirements, or projects where customer involvement is not possible
+
+**Software Life Cycle Models (Full List)**
+
+A software life cycle model is a high-level process.
+- Build-and-fix
+- Waterfall
+- Rapid prototyping
+- Incremental
+- Spiral
+- Rational Unified Process (RUP)
+- Extreme Programming (XP)
+- Agile
+
+**Summary**
+- Software engineering is hard, and we need software process models to help
+	- Prescribe and describe what we do to develop software
+	- Help us apply rigor to software development
+- There has been a shift from rigid, heavyweight, document-driven processes to lightweight, agile processes
+- Models covered today → RUP, XP, Agile
+
+<!-- last cleaned: end of Lecture 18 (RUP workflows: Architectural Analysis, Analysis & Design, Use Case Analysis; Extreme Programming with practices/principles expanded and process steps; transition to Agile with Manifesto, principles, Ziv's Law, strengths/weaknesses; full software life cycle model list) -->
