@@ -1959,6 +1959,417 @@ main:
 - MARS = little-endian → LSB at lowest address
 - Same bits, different meanings — interpretation is decided by the instruction width and signed/unsigned variant, not the data itself
 
-<!-- last cleaned: end of MIPS Memory & Data Segment lecture (Summary block) -->
+## Discussion 5: Function Calls, Register Convention & the Stack
+
+**Terminology**
+- **Caller** → the calling function (e.g. `main`)
+- **Callee** → the called function (e.g. `sum`)
+
+```c
+void main() {
+  int y;
+  y = sum(42, 7);
+  ...
+}
+int sum(int a, int b) {
+  return (a + b);
+}
+```
+
+**Function Conventions (the contract)**
+- Caller:
+    - passes arguments to the callee
+    - "jumps" to the callee
+- Callee:
+    - performs the function
+    - returns the result to the caller
+    - returns to the point of call
+    - must **not** overwrite registers/memory the caller still needs
+
+**Calling with Jumps**
+- Unconditional jump → `j`, or `jal` + `jr`
+- `j label` → jump to the first instruction after `label` → `PC ← 26-bit address of label`
+- `jal label` → **jump and link**
+    - jumps (same as `j`)
+    - stores the address of the instruction *after* the `jal` into `$ra` → `$ra ← PC + 4`
+- `jr $reg` → jumps to the address held in `$reg` → `PC ← $reg` (e.g. `jr $ra`)
+
+**MIPS Function Conventions**
+- Call a function → `jal` (jump and link)
+- Return from a function → `jr $ra` (jump register)
+- Arguments → `$a0–$a3`
+- Return value → `$v0`
+
+**MIPS Register Set**
+
+| Name | Reg # | Usage |
+| --- | --- | --- |
+| `$0` | 0 | the constant value 0 |
+| `$at` | 1 | assembler temporary (reserved) |
+| `$v0–$v1` | 2–3 | function return values |
+| `$a0–$a3` | 4–7 | function arguments |
+| `$t0–$t7` | 8–15 | temporaries (not preserved across calls) |
+| `$s0–$s7` | 16–23 | saved variables (preserved across calls) |
+| `$t8–$t9` | 24–25 | more temporaries |
+| `$k0–$k1` | 26–27 | OS temporaries (reserved for OS) |
+| `$gp` | 28 | global pointer |
+| `$sp` | 29 | stack pointer |
+| `$fp` | 30 | frame pointer |
+| `$ra` | 31 | function return address |
+
+**How `jal` / `jr` Work Together**
+
+```assembly
+0x00400200 main:   jal simple        # jumps to simple; $ra = PC + 4 = 0x00400204
+0x00400204         add $s0, $s1, $s2
+...
+0x00401020 simple: jr $ra            # jumps to address in $ra (0x00400204)
+```
+
+- `void` → `simple` doesn't return a value
+- `jal` → jumps to `simple`, sets `$ra = 0x00400204`
+- `jr $ra` → jumps back to `0x00400204` (the instruction right after the call)
+
+**Passing Arguments & Return Value** — `diffofsums(2, 3, 4, 5)`
+
+```c
+int main() {
+  int y;
+  y = diffofsums(2, 3, 4, 5);   // 4 arguments
+}
+int diffofsums(int f, int g, int h, int i) {
+  int result;
+  result = (f + g) - (h + i);
+  return result;                // return value
+}
+```
+
+```assembly
+# $s0 = y
+main:
+  addi $a0, $0, 2      # argument 0 = 2
+  addi $a1, $0, 3      # argument 1 = 3
+  addi $a2, $0, 4      # argument 2 = 4
+  addi $a3, $0, 5      # argument 3 = 5
+  jal  diffofsums      # call function
+  add  $s0, $v0, $0    # y = returned value
+
+# $s0 = result
+diffofsums:
+  add $t0, $a0, $a1    # $t0 = f + g
+  add $t1, $a2, $a3    # $t1 = h + i
+  sub $s0, $t0, $t1    # result = (f + g) - (h + i)
+  add $v0, $s0, $0     # put return value in $v0
+  jr  $ra              # return to caller
+```
+
+**The Problem: Clobbered Registers**
+- `diffofsums` overwrites 3 registers → `$t0`, `$t1`, `$s0`
+- `$s0` is supposed to be **preserved** across calls → if `main` uses `$s0` to control program flow, the program executes incorrectly
+- Why not worry about the `$tX` registers? → by convention they're *not* preserved, so the caller already knows not to rely on them
+- Fix → `diffofsums` can use the **stack** to temporarily store and restore registers
+
+**Register Convention (partial)**
+- `$t0–$t9` → temporaries → values **can change** when a subprogram is called (not preserved)
+- `$s0–$s8` → saved values → **preserved** across subprogram calls
+
+**Register Convention (full)**
+
+| Preserved (Callee-Saved) | Nonpreserved (Caller-Saved) |
+| --- | --- |
+| `$s0–$s7` | `$t0–$t9` |
+| `$ra` *(caller-saved)* | `$a0–$a3` |
+| `$sp` | `$v0–$v1` |
+| stack **above** `$sp` | stack **below** `$sp` |
+
+**Prologue / Epilogue Pattern**
+- If the callee needs a preserved (`$sX`) register, it must wrap the body:
+    - **Prologue** → push (store) the old value onto the stack
+    - **Epilogue** → pop (restore) the old value before returning
+- This keeps the caller's `$s0` "good" across the call (the callee failed to follow register convention otherwise)
+
+**The Stack**
+- Memory used to temporarily save variables
+- Like a stack of dishes → last-in-first-out (LIFO)
+- **Expands** → uses more memory when more space is needed
+- **Contracts** → frees memory when the space is no longer needed
+- Grows **down** → from higher to lower memory addresses
+- `$sp` (stack pointer) → points to the **top** of the stack
+
+**MIPS Memory Map**
+
+```
+Address        Segment
+0xFFFFFFFC  ┌──────────────┐
+            │   Reserved   │
+0x80000000  ├──────────────┤
+0x7FFFFFFC  │  Stack   ↓   │ ← $sp   (stack grows down)
+            │ Dynamic Data │
+            │  Heap    ↑   │
+0x10010000  ├──────────────┤
+0x1000FFFC  │ Static Data  │
+0x10000000  ├──────────────┤
+0x0FFFFFFC  │     Text     │  (instructions)
+0x00400000  ├──────────────┤
+0x003FFFFC  │   Reserved   │
+0x00000000  └──────────────┘
+
+push → $sp moves down (allocate)    pop → $sp moves up (free)
+```
+
+**Storing Saved Registers on the Stack (callee-saved)**
+
+```assembly
+# $s0 = result
+diffofsums:
+  addi $sp, $sp, -4    # Prologue: make space for 1 register
+  sw   $s0, 0($sp)     #   store $s0 on stack
+                       #   (no need to store $t0 or $t1)
+  add  $t0, $a0, $a1   # $t0 = f + g            ┐
+  add  $t1, $a2, $a3   # $t1 = h + i            │ Body
+  sub  $s0, $t0, $t1   # result = (f+g) - (h+i) │
+  add  $v0, $s0, $0    # return value in $v0    ┘
+  lw   $s0, 0($sp)     # Epilogue: restore $s0 from stack
+  addi $sp, $sp, 4     #   deallocate stack space
+  jr   $ra             # return to caller
+```
+
+**The Stack During the `diffofsums` Call**
+
+```
+Address Data         Address Data         Address Data
+  FC     ?  ← $sp       FC     ?             FC     ?   ← $sp
+  F8                    F8    $s0 ← $sp      F8
+  F4                    F4                   F4
+  F0                    F0                   F0
+  (a) Initial State     (b) push($s0)        (c) pop()
+```
+
+- push → store `$s0` at F8, `$sp` moves down to F8
+- pop → restore `$s0`, `$sp` moves back up to FC
+
+**Nested Function Calls — the `$ra` Problem**
+- `main` → `simple` → `easy`
+
+```assembly
+0x00400020 main:   jal simple        # $ra = PC + 4 = 0x00400024
+0x00400024         add $s0, $s1, $s2
+...
+0x00400120 simple: jal easy          # $ra = PC + 4 = 0x00400124  ← OVERWRITES old $ra!
+0x00400124         jr  $ra
+...
+0x00400220 easy:   jr  $ra
+```
+
+- Problem → the inner `jal easy` overwrites `$ra` (`0x00400024` → `0x00400124`)
+- When `simple` runs `jr $ra` it jumps to `0x00400124` (back inside `simple`) instead of returning to `main` → *Oops… where is `0x00400024`?*
+- `$ra` only holds **one** return address → nesting clobbers it
+
+**Fix → Save `$ra` on the Stack**
+
+```assembly
+proc1:
+  addi $sp, $sp, -4    # make space on stack
+  sw   $ra, 0($sp)     # save $ra on stack
+  jal  proc2
+  ...
+  lw   $ra, 0($sp)     # restore $ra from stack
+  addi $sp, $sp, 4     # deallocate stack space
+  jr   $ra             # return to caller
+```
+
+**Recursive Function Calls**
+
+```c
+int factorial(int n) {          // 3! = 3·2·1 = 6
+  if (n <= 1) return 1;
+  else return (n * factorial(n-1));
+}
+```
+
+- `factorial(3)` → 3 · `factorial(2)` → 2 · `factorial(1)` → return 1
+- Each call needs its own `n` (and `$ra`) preserved across the recursive call → use `$sX` registers + the stack (`$tX` would be clobbered by the recursive call)
+
+```assembly
+0x90 factorial: addi $sp, $sp, -8    # Prologue: make space (2 words)
+0x94            sw   $ra, 0($sp)     #   store $ra
+0x98            sw   $s0, 4($sp)     #   store $s0
+0x9C            addi $t0, $0, 2
+0xA0            slt  $t0, $a0, $t0   # n < 2 ?  (i.e. n <= 1)
+0xA4            beq  $t0, $0, else   # no  → go to else
+0xA8            addi $v0, $0, 1      # yes → return 1
+0xAC            j    end             #       jump to epilogue
+0xB0 else:      move $s0, $a0        # save n into $s0
+0xB4            addi $a0, $s0, -1    # n = n - 1
+0xB8            jal  factorial       # recursive call
+0xBC            mul  $v0, $s0, $v0   # n · factorial(n-1)
+0xC0 end:       lw   $ra, 0($sp)     # Epilogue: restore $ra
+0xC4            lw   $s0, 4($sp)     #   restore $s0
+0xC8            addi $sp, $sp, 8     #   release space
+0xCC            jr   $ra             # return
+```
+
+**Stack During the Recursive Call** (3! = 6)
+
+```
+Each frame = 2 words: [ $ra @ low addr, $s0 @ high addr ]
+
+      Deepest recursion              Unwinding (returns)
+   Address Data                   Address Data
+     FC                  ← $sp       FC            $v0 = 6  (final)
+     F8    $s0                       F8    $s0
+     F4    $ra                       F4    $ra     ← $sp   $s0=3, $v0 = 3·2 = 6
+     F0    $s0 (0x3)                 F0    $s0 (0x3)
+     EC    $ra (0xBC)                EC    $ra     ← $sp   $s0=2, $v0 = 2·1 = 2
+     E8    $s0 (0x2)                 E8    $s0 (0x2)
+     E4    $ra (0xBC)    ← $sp       E4    $ra     ← $sp   $s0=1, $v0 = 1
+```
+
+- Each recursive call pushes its own `$ra` + `$s0` (the current `n`)
+- On the way back, each frame is popped and the multiply runs → 1 → 2·1 → 3·2 = 6
+
+**Function Call Summary**
+- **Caller**:
+    - put arguments in `$a0–$a3`
+    - save any needed registers (`$ra`, maybe `$t0–$t9`)
+    - `jal callee`
+    - look for the result in `$v0`
+    - restore registers
+- **Callee**:
+    - save registers that might be disturbed (`$s0–$s7`)
+    - perform the function
+    - put the result in `$v0`
+    - restore saved registers
+    - `jr $ra`
+
+## Discussion 6: System Calls (`syscall`)
+
+**What `syscall` Is**
+- `syscall` → requests a system service from the OS/simulator
+- Used for:
+    - **Input/output** → read from console / file / external device; print to console, write to file / device
+    - random numbers, time, sleep, …
+- `$v0` → holds the **service number** (which service you want)
+    - plus other argument values, if any
+- Full list → MARS help menu (F1), or the MIPS syscall function reference in MARS
+
+**Steps to Use a `syscall`**
+1. Load the service number into `$v0`
+2. Load argument values (if any) into `$a0`, `$a1`, `$a2`, or `$f12` as specified
+3. Issue the `syscall` instruction
+4. Retrieve return values (if any) from the specified result registers
+
+**Lab0: Two Services** (no global variables)
+- Print an integer to the console → service `1`
+
+```assembly
+li   $v0, 1
+move $a0, $s0
+syscall
+```
+
+- Exit the program → service `10`
+
+```assembly
+li $v0, 10
+syscall
+```
+
+**Printing Characters & Strings** (Lab2 `main`)
+- Print a string → service `4`
+
+```assembly
+li $v0, 4
+la $a0, change_case_output
+syscall
+```
+
+- How do you know the end of a string? → the NULL terminator `'\0'`
+- Print the **1st** char → service `11` (print char)
+
+```assembly
+li $v0, 11
+la $t0, change_case_output    # address of the string
+lb $a0, 0($t0)                # load the 1st byte (the char value)
+syscall
+```
+
+- For the **2nd** char → use offset `1($t0)`
+- Address vs. value distinction:
+    - `la $t0, label` → loads the **address**
+    - `lb $a0, 0($t0)` → loads the **value** of the char at that address
+
+**Common Print Services**
+
+| Service | `$v0` | Arguments |
+| --- | --- | --- |
+| print integer | 1 | `$a0` = integer |
+| print string | 4 | `$a0` = address of string |
+| print char | 11 | `$a0` = char value |
+| exit | 10 | — |
+
+**Demo: Print globals & arrays** (`4_data_demo.asm`)
+- Print a string
+- Print a single character from a string
+- Print elements from a char array
+- Print elements from an int array
+
+**File I/O — Must Open First**
+- Must **open** a file before reading/writing it
+- Concept → like C `FILE *fptr = fopen("myFile.dat", "r");` or Python `f = open("myFile.dat", "r")` → returns a **file descriptor**
+- In MIPS assembly → low-level → use `syscall` to obtain the file descriptor directly
+- Read → reads bytes into a **buffer** (like C `fgets(str, 4, fptr)` / Python `f.read(4)`)
+
+**File I/O syscall Table**
+
+| Service | Code | Arguments | Result |
+| --- | --- | --- | --- |
+| open file | 13 | `$a0` = addr of null-terminated filename; `$a1` = flags; `$a2` = mode | `$v0` = file descriptor (negative if error) |
+| read from file | 14 | `$a0` = file descriptor; `$a1` = addr of input buffer; `$a2` = max chars to read | `$v0` = # chars read (0 if EOF, negative if error) |
+| write to file | 15 | `$a0` = file descriptor; `$a1` = addr of output buffer; `$a2` = # chars to write | `$v0` = # chars written (negative if error) |
+| close file | 16 | `$a0` = file descriptor | — |
+
+- Open flags → `0` = read, `1` = write
+
+**Example: Open / Write / Close** (from F1 Help Menu)
+
+```assembly
+.data
+fout:   .asciiz "testout.txt"                         # filename for output
+buffer: .asciiz "The quick brown fox jumps over the lazy dog."
+
+.text
+# Open (for writing) a file that does not exist
+li   $v0, 13          # system call for open file
+la   $a0, fout        # output file name
+li   $a1, 1           # flags → open for writing (0 = read, 1 = write)
+li   $a2, 0           # mode is ignored
+syscall
+move $s6, $v0         # save the file descriptor
+
+# Write to the file just opened
+li   $v0, 15          # system call for write to file
+move $a0, $s6         # file descriptor
+la   $a1, buffer      # address of buffer to write from
+li   $a2, 44          # hardcoded buffer length (# chars)
+syscall
+
+# Close the file
+li   $v0, 16          # system call for close file
+move $a0, $s6         # file descriptor to close
+syscall
+```
+
+- Be careful with `$sX` here → register convention applies
+    - may replace with `$tX`, or use `$sp` to save/restore
+- To **read** a file instead → change the syscall types (open with flag `0`, then use service `14`)
+
+**Summary**
+- `syscall` → ask the OS/MARS for a service; the service number goes in `$v0`
+- Pattern → set `$v0` (+ `$a0`/`$a1`/`$a2`/`$f12` args) → `syscall` → read result registers
+- Common codes → `1` print int, `4` print string, `11` print char, `10` exit
+- Files → must **open (13)** before **read (14)** / **write (15)**, then **close (16)**; `$v0` returns the file descriptor (negative = error)
+
+<!-- last cleaned: end of Discussion 6 (System Calls / syscall) -->
 
 
