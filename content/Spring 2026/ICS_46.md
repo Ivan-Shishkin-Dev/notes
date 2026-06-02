@@ -3811,13 +3811,19 @@ vector<int> dijkstra(const vector<vector<pair<int,int>>>& graph, int s) {
 
 **Graph Traversals**
 - Depth-first (DFS)
+	- Can get stuck going down a cycle forever → needs a visited set
 - Breadth-first (BFS)
-- Iterative deepening DFS
+	- Finds the shortest path to the solution (fewest edges)
+- Iterative deepening DFS (IDDFS)
+	- ELI5: run DFS but only let it go K levels deep, throw it away, then run it again allowing K+1 levels, then K+2, ... → a `for` loop over the depth limit K that keeps re-running a depth-limited DFS until the goal shows up
+	- Gets BFS's shortest-path guarantee (finds the shallowest goal first) with DFS's small O(depth) memory
+	- Yes it re-explores the shallow nodes every round, but that's cheap → almost all the nodes live at the deepest level anyway
 - Best-first search
 
 **Graph Algorithms**
 - Topological sort
 - Minimum spanning tree: Kruskal's, Prim's
+	- Kruskal's → be able to derive
 - Shortest path: Dijkstra's, Bellman-Ford, A*
 
 <!-- last cleaned: end of Course Review -->
