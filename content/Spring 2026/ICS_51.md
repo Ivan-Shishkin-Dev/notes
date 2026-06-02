@@ -1978,20 +1978,20 @@ int sum(int a, int b) {
 
 **Function Conventions (the contract)**
 - Caller:
-    - passes arguments to the callee
-    - "jumps" to the callee
+	- passes arguments to the callee
+	- "jumps" to the callee
 - Callee:
-    - performs the function
-    - returns the result to the caller
-    - returns to the point of call
-    - must **not** overwrite registers/memory the caller still needs
+	- performs the function
+	- returns the result to the caller
+	- returns to the point of call
+	- must **not** overwrite registers/memory the caller still needs
 
 **Calling with Jumps**
 - Unconditional jump → `j`, or `jal` + `jr`
 - `j label` → jump to the first instruction after `label` → `PC ← 26-bit address of label`
 - `jal label` → **jump and link**
-    - jumps (same as `j`)
-    - stores the address of the instruction *after* the `jal` into `$ra` → `$ra ← PC + 4`
+	- jumps (same as `j`)
+	- stores the address of the instruction *after* the `jal` into `$ra` → `$ra ← PC + 4`
 - `jr $reg` → jumps to the address held in `$reg` → `PC ← $reg` (e.g. `jr $ra`)
 
 **MIPS Function Conventions**
@@ -2084,8 +2084,8 @@ diffofsums:
 
 **Prologue / Epilogue Pattern**
 - If the callee needs a preserved (`$sX`) register, it must wrap the body:
-    - **Prologue** → push (store) the old value onto the stack
-    - **Epilogue** → pop (restore) the old value before returning
+	- **Prologue** → push (store) the old value onto the stack
+	- **Epilogue** → pop (restore) the old value before returning
 - This keeps the caller's `$s0` "good" across the call (the callee failed to follow register convention otherwise)
 
 **The Stack**
@@ -2230,27 +2230,27 @@ Each frame = 2 words: [ $ra @ low addr, $s0 @ high addr ]
 
 **Function Call Summary**
 - **Caller**:
-    - put arguments in `$a0–$a3`
-    - save any needed registers (`$ra`, maybe `$t0–$t9`)
-    - `jal callee`
-    - look for the result in `$v0`
-    - restore registers
+	- put arguments in `$a0–$a3`
+	- save any needed registers (`$ra`, maybe `$t0–$t9`)
+	- `jal callee`
+	- look for the result in `$v0`
+	- restore registers
 - **Callee**:
-    - save registers that might be disturbed (`$s0–$s7`)
-    - perform the function
-    - put the result in `$v0`
-    - restore saved registers
-    - `jr $ra`
+	- save registers that might be disturbed (`$s0–$s7`)
+	- perform the function
+	- put the result in `$v0`
+	- restore saved registers
+	- `jr $ra`
 
 ## Discussion 6: System Calls (`syscall`)
 
 **What `syscall` Is**
 - `syscall` → requests a system service from the OS/simulator
 - Used for:
-    - **Input/output** → read from console / file / external device; print to console, write to file / device
-    - random numbers, time, sleep, …
+	- **Input/output** → read from console / file / external device; print to console, write to file / device
+	- random numbers, time, sleep, …
 - `$v0` → holds the **service number** (which service you want)
-    - plus other argument values, if any
+	- plus other argument values, if any
 - Full list → MARS help menu (F1), or the MIPS syscall function reference in MARS
 
 **Steps to Use a `syscall`**
@@ -2296,8 +2296,8 @@ syscall
 
 - For the **2nd** char → use offset `1($t0)`
 - Address vs. value distinction:
-    - `la $t0, label` → loads the **address**
-    - `lb $a0, 0($t0)` → loads the **value** of the char at that address
+	- `la $t0, label` → loads the **address**
+	- `lb $a0, 0($t0)` → loads the **value** of the char at that address
 
 **Common Print Services**
 
@@ -2361,7 +2361,7 @@ syscall
 ```
 
 - Be careful with `$sX` here → register convention applies
-    - may replace with `$tX`, or use `$sp` to save/restore
+	- may replace with `$tX`, or use `$sp` to save/restore
 - To **read** a file instead → change the syscall types (open with flag `0`, then use service `14`)
 
 **Summary**
@@ -2370,6 +2370,597 @@ syscall
 - Common codes → `1` print int, `4` print string, `11` print char, `10` exit
 - Files → must **open (13)** before **read (14)** / **write (15)**, then **close (16)**; `$v0` returns the file descriptor (negative = error)
 
-<!-- last cleaned: end of Discussion 6 (System Calls / syscall) -->
+# Lecture 8: Memory — Latches
+
+**Today's Objectives**
+- Ideal vs real gates
+- Sequential circuits
+- Latch
+- Clock
+- Brief look at processor organization
+- Reading: Sec. 3.3.1–3.3.4
+
+**Storage Elements**
+- So far → only memoryless digital functions (**combinational logic**)
+- Now we need to store program data and intermediate values → **sequential logic**
+- The ISA tells us there are registers and memory → e.g. `ADD R4, R6`:
+	- where does the data reside? What are `R4`, `R6`? How do they work?
+- Built from gates, similar to combinational logic, BUT:
+	- require **feedback** → new state = F(current state, inputs)
+	- require **timing** to be taken into account → assume non-zero gate delay → introduce the **clock**
+- A combinational circuit has latency DT → output changes DT seconds after an input change, and keeps changing as long as the inputs change
+- New state → a boolean function depending on the inputs from DT earlier + the state from DT earlier
+
+**SR Latch (Set-Reset)** — a basic storage element
+- Two **cross-coupled NOR gates** → Q and Q' are fed back as inputs → this is what makes it sequential
+- A **bi-stable** circuit that stores a binary value:
+	- Q = 1 → "1" state
+	- Q = 0 → "0" state
+- Can only be in one of these states → output change requires S or R to be applied
+
+```
+   R ──▶[ NOR ]──┬──────────▶ Q
+           ▲     │
+           └──── │ ────┐   (cross-coupled: Q feeds the bottom NOR,
+           ┌──── │ ────┘    Q' feeds the top NOR)
+           ▼     │
+   S ──▶[ NOR ]──┴──────────▶ Q'
+```
+
+- Behavior:
+	- S = 1, R = 0 → **Set** → Q = 1
+	- S = 0, R = 1 → **Reset** → Q = 0
+	- S = R = 0 → **hold** (Q unchanged)
+	- **S = R = 1 → forbidden** → unstable; Q may oscillate before settling to 1 or 0
+
+**SR Latch Truth Table**
+
+| Qt | S | R | Qt+1 |
+| --- | --- | --- | --- |
+| 0 | 0 | 0 | 0 |
+| 0 | 0 | 1 | 0 |
+| 0 | 1 | 0 | 1 |
+| 0 | 1 | 1 | ? |
+| 1 | 0 | 0 | 1 |
+| 1 | 0 | 1 | 0 |
+| 1 | 1 | 0 | 1 |
+| 1 | 1 | 1 | ? |
+
+- `?` → undefined output (the S = R = 1 problem)
+
+**Problem with the SR Latch**
+- Combinational functions take time to settle → the output may vary for a while before reaching the correct value
+- If S or R change, Q changes **immediately** → but we want changes to happen only **when desired** and **once per clock cycle**
+- Fix → modify the latch to incorporate the **clock** as an input
+
+**The Clock**
+- We'll build a computer with many latches → need to make sure things happen when required
+- Example arithmetic operation:
+	- take data from 2 registers → run through the ALU → store to another register
+	- these three steps must occur at the right time
+- Solution → generate and distribute a special signal called the **clock**
+	- keeps time → like a conductor for an orchestra or a drummer in a band
+- Any state change in the system is **referenced to the clock**
+- The clock is the basic time unit for executing instructions (an instruction may take several clocks)
+- Must account for signal propagation through gates → typical gate delay today < 100 ps (10⁻¹⁰ s)
+
+**Clocked SR Latch**
+- We want gate outputs to change only at specific times → add circuitry so changes occur only when the clock is active (Clock = 1)
+- Add two gates in front of the NOR latch, gated by the clock:
+	- if Clock = 0 → neither S nor R reaches the NOR gates → Q holds
+	- if Clock = 1 → S/R pass through → Q can change
+
+```
+   S ───┬──[ AND ]──┐
+        │     │     │
+ Clock ─┼─────┤  [ SR latch ]──▶ Q, Q'
+        │     │     │
+   R ───┴──[ AND ]──┘
+```
+
+- Q only changes when Clock = 1
+- Timing → S, R come from elsewhere in the system; they can only take effect after the clock goes high (DT1 later); Q then changes DT2 later, due to gate propagation delay
+
+**Still Have Problems**
+- **(A)** Undefined state when S = R = 1 → solved by the **D latch** (next)
+- **(B)** Inputs can change as long as the clock is high → half a clock cycle → that's too long
+	- could play with the **duty cycle** (% of the cycle that is "1") → generate a very narrow "1" pulse → but hard, especially at 4 GHz
+	- "sample" the input only while the clock is "1"
+	- better solution → **flip-flops** (later)
+
+**D Latch** — avoiding S = R = 1
+- Only **one** data input: D (plus the clock)
+- D drives S directly; D' (inverted D) drives R → S and R can never both be 1
+- When the clock becomes 1:
+	- D = 1 → the circuit remembers 1 (Q = 1)
+	- D = 0 → the circuit remembers 0 (Q = 0)
+
+```
+   D ──┬────────────[ AND ]──┐
+       │              │       │
+       │      Clock ──┤   [ SR latch ]──▶ Q, Q'
+       │              │       │
+       └──[ NOT ]─────[ AND ]──┘
+```
+
+**8-Bit Memory**
+- Use 8 D latches → an 8-bit memory
+- 8 inputs (D0–D7), all written at the same time → all 8 latches share the **same clock**
+
+```
+        D0 ──[ D Latch ]── Q0
+        D1 ──[ D Latch ]── Q1
+        D2 ──[ D Latch ]── Q2
+         ⋮                  ⋮
+        D7 ──[ D Latch ]── Q7
+                 ▲
+              clock (shared)
+```
+
+**Registers**
+- A **register** → a group of latches/flip-flops treated as **one unit**, instead of addressing each storage element individually
+
+```
+   Data_in[7:0] ──▶│  Register A  │──▶ Data_out[7:0]
+                        ▲
+                      Clock
+```
+
+# Lecture 9: Flip-Flops & RAM
+
+**Flip-Flops**
+- D latches still have a problem → input changes while the clock is "1" still propagate
+- Another (better) solution to the SR-latch input-change problem
+- Two approaches:
+	- **Master-slave** flip-flops
+	- **Edge-triggered** flip-flops
+- Change can occur only on a clock **edge** (transition 0→1 or 1→0) → exactly **one change per clock cycle**, output stable for the whole clock period
+
+**D Flip-Flop Timing**
+- D (data) can wander, but Q only updates on the active clock edge → Q is stable between edges
+
+**Master-Slave D Flip-Flop**
+- Two D latches in series:
+	- **Master** latch → clocked by Clk
+	- **Slave** latch → clocked by Clk' (the inverted clock)
+
+```
+   D ──▶│ D    Q │── Qm ──▶│ D    Q │──▶ Q
+        │ Master │         │ Slave  │
+ Clk ─┬▶│ Clk    │     ┌──▶│ Clk Q' │──▶ Q'
+      │  └────────┘     │   └────────┘
+      └────[ NOT ]──────┘  Clk'
+```
+
+- When Clk is **high** → the master is transparent → Qm follows D (slave holds, since Clk' = 0)
+- When Clk is **low** → the slave is transparent → Q follows Qm (master holds)
+- The output changes at the clock edge that **falls** from 1 → 0 → this D FF is **negative-edge triggered**
+
+**Random Access Memory (RAM)**
+- **Access time** → from address presented to data out
+- **Constant** access time → independent of the address (unlike tape or disk, which are sequential)
+- Semiconductor memory → RAM and ROM
+- Many bits on one IC → each bit is a "latch"
+- Two types (speed / cost / size tradeoff):
+	- **SRAM** (Static) → faster, fewer bits → each bit is a latch
+	- **DRAM** (Dynamic) → denser/cheaper → each bit stores **charge** on a tiny capacitor
+- Tradeoff → higher speed costs more per bit and limits capacity
+
+**Memory Cell Organization**
+- **SRAM cell** → a clocked D-latch-style cell:
+
+```
+   Data_in ──▶│ D       │
+   Clock ─────▶│ C    Q │──▶ Data_out
+   Write ─────▶│ En      │
+```
+
+- **DRAM cell** → one transistor controls access to a capacitor that stores charge:
+	- **Write** → put charge in
+	- **Read** → let charge flow out (destructive → needs refresh)
+
+**Register File**
+- An array of registers (R0…R7) addressed as a unit
+- **Write path** → an address **decoder** drives the **Enable** of the selected register → only that register loads `Data_in` on the clock
+- **Read path** → an address-controlled **mux** selects the addressed register's Q → `Data_out`
+- For 8 registers → a **3-bit** address
+
+```
+   Data_in ─┬──▶│ D  R0  Q │─┐
+            ├──▶│ D  R1  Q │─┤
+            │        ⋮       ├─[ MUX ]──▶ Data_out
+            └──▶│ D  R7  Q │─┘     ▲
+                   ▲               │
+   Address ─▶[ decoder ]───────────┘
+   (3 bits)   (drives Enable)   (selects output)
+                   ▲
+                 Clock
+```
+
+# Lecture 10: More Memory — Organization & Decoding
+
+**Today's Objectives**
+- Continue the study of memory organization
+- Reading: Sec. 3.3.1–3.3.4, Sec. 2.1 pp. 39–42, Sec. 4.1.1–2 (next time)
+
+**Review**
+- **SR latch** → basic storage device, but the output changes as the inputs change
+- **Clock & clocked latches** → better control of *when* the output changes
+- **Flip-flops** → best way to store data, based on the clock's rising edge → one change per clock cycle, output stable for the whole period
+- **Registers** → aggregate a number of latches/flip-flops, controlled as a unit
+- **Register file** → array of registers (see [[ICS_51#Lecture 9: Flip-Flops & RAM|Lecture 9]])
+
+**Memory Chips**
+- A memory IC is typically organized as a **cell matrix** → NxN (good for layout)
+- At each position → a single cell (1 bit)
+- To get a **wider** output → replicate the matrix
+	- e.g. a 128 Mb IC may have 8 blocks (individual NxN matrices)
+- Memory is built out of multiple chips
+	- e.g. a 256 MB DIMM may have 16 × 128 Mb ICs → eight are read/written at once, delivering 8 bits (a byte)
+
+**Memory Organization & Decoding**
+- A **decoder** circuit selects the appropriate word in memory based on the address provided
+- Two steps:
+	- first → a **row** is read out of the cell matrix, N bits at once
+	- second → a **bit** (column) is selected from that row and output
+- The output goes through a **tri-state buffer** → 3 states: 0, 1, **floating** (electrically disconnected)
+- The larger the memory → the longer it takes to read
+- SRAM is faster than DRAM but has fewer bits:
+	- SRAM "bit" → a latch
+	- DRAM "bit" → a special transistor (capacitor + access transistor)
+
+**Memory IC Organization (NxN, 1 bit wide)**
+
+```
+   Data_in
+      │
+      ▼
+   ┌───────────────────────┐
+   │  ▢   ▢   •••   ▢       │ ◀── row selected by Row Address
+   │  ▢   ▢          ▢      │
+   │         •••            │     (▢ = single cell)
+   │  ▢   ▢          ▢      │
+   └───┬───┬───────┬────────┘
+  Row  │   │       │
+  Addr ▼   ▼       ▼
+       [  column MUX  ] ◀── Column Address
+              │
+              ▼
+         [ tri-state ] ◀── Output Enable (OE)
+              │
+              ▼
+           Data_out
+```
+
+- Row Address → row decoder selects one row (N bits read at once)
+- Column Address → mux selects 1 bit from that row
+- OE → enables the tri-state buffer onto the output
+
+**RAM Control**
+- Multiple chips are connected together to → get a **wider** word, or get a **larger** memory
+- Need to be able to → **select** a chip and **enable** its output
+- Control signals:
+	- **CS** (chip select) → nothing happens inside a RAM unless it is selected
+	- **OE** (output enable) → allows direct connection of IC outputs (tri-state onto a shared bus)
+	- **R/W'** → read or write
+
+**A 4-Chip Memory System**
+
+```
+   Data_Bus ═══════════╦════════════╦════════════╦═══════════
+                       │            │            │
+               ┌───────┴───┐ ┌──────┴────┐      ┌┴──────────┐
+   Addr ──────▶│ Din  Dout │ │ Din  Dout │ •••  │ Din  Dout │
+   R/W' ──────▶│ Addr RAM0 │ │ Addr RAM1 │      │ Addr RAM3 │
+               │ R/W'    OE│ │ R/W'    OE│      │ R/W'    OE│
+               │ CS        │ │ CS        │      │ CS        │
+               └────▲──────┘ └────▲──────┘      └────▲──────┘
+                    │             │                  │
+   Address ─▶[ decoder ]─CS0──────┴─CS1──────────────┴─CS3
+   Output_enable ────────(OE, shared)
+   R/W' ─────────────────(shared)
+```
+
+- Low address bits → `Addr` (shared by all chips)
+- High address bits → decoder → one **CS** per chip → selects the active chip
+- Only the selected chip (with OE asserted) drives the shared data bus
+
+# Lecture 11: Disk Memory, Error Detection/Correction & Compression
+
+**Today's Objectives**
+- Disk memory
+- Error correction & detection
+- Full data path organization (next lecture)
+- Reading: Sec. 2.3.2 (disk), Sec. 4.1.1 (ignore JVM stuff), class slides
+
+**Disk Memory**
+- Disk → **magnetic** memory
+- **"Sequential"** access (mechanical positioning)
+- Reads/writes are performed on **blocks** of data → more efficient this way
+- Much **slower** than memory → milliseconds to access, even at 15K RPM
+- Much **larger** than main memory (DRAM) → multiple TB common (and growing)
+
+**Disk Structure**
+- A disk = a stack of **platters**, each with two recording **surfaces**
+- A mechanical **arm** moves the read/write head across the surfaces
+- Each surface → data on concentric circles called **tracks**, further divided into **sectors** (marked by a sector mark)
+
+```
+   ════════ Surface 1     ◀── direction of arm
+   ════════ Surface 2
+   ════════ Surface 3
+   ════════ Surface 4
+        ⋮
+   (head moves in/out to reach the desired track)
+
+   One platter (top view):  Track 0 (outer) … Track N (inner),
+   each divided into sectors
+```
+
+**Disk Organization — Terms**
+- **Track** → sequence of bits at the same radius on one surface
+- **Cylinder** → set of tracks at the same radius across all platters
+- **Sector** → fixed-length segment within a track
+- **Seek time** → time to position the head over a track
+- **Rotational latency** → time for the disk to rotate the desired sector under the head
+- **Head transfer rate** → how fast data transfers once the head is in position
+
+**Parameters**
+- Rotational speed → 3600 to 15K RPM → determines how soon the data appears under the head
+- Seek speed → track-to-track → milliseconds
+- Average time to find data → ½ rotational delay + average seek time
+	- ~100 ns for DRAM vs **~15 ms for disk** → orders of magnitude slower
+- Transfer rate → ~100 MB/sec
+
+**Operation**
+- Address supplied as **(platter, track, sector)**
+- 1. **Seek** → move the arm + R/W head assembly to the desired track
+- 2. **Locate the sector** → wait for the platter to rotate to the right place
+- 3. **Read/write** the sector
+- Can read more at once → a whole **cylinder** → read the track from all platters at once
+
+**Optimization**
+- Read an entire sector / track / cylinder → helps **amortize** the startup cost
+- Cache the read data in the controller's memory → satisfies future requests from RAM (works due to **locality**)
+- The disk controller + OS may reorder disk I/O requests to minimize seek time
+
+**Error Detection & Correction**
+- Data stored in bulk, or transmitted, can be **corrupted**
+- Causes of corruption are diverse; occurrence is relatively infrequent
+
+**Error Detection — Parity (simplest method)**
+- When writing/sending a block → add a **parity bit** indicating whether the number of 1s is even (or odd)
+- When reading/receiving → recompute and check the count
+- If the written parity ≠ the read parity → an **error was detected**
+
+```
+                 P │←──── Data bits ────→
+   Transmitted:  0 │ 1 0 0 1 0 1 1     (four 1s → even → P = 0)
+                 P │       ↓ error
+   Received:     0 │ 0 0 0 1 0 1 1     (three 1s → odd → mismatch ⟹ error!)
+```
+
+- Detects a single-bit error, but cannot say **which** bit, and cannot fix it
+
+**Error Correction — Hamming Codes**
+- Use **multiple** parity bits, each checking an **overlapping** subset of the data bits
+- The combined parity bits **name the position** of the wrong bit → so it can be corrected
+
+**Compression — Huffman Coding**
+- A **lossless** compression algorithm
+- Each symbol is encoded in a bit string whose length is "proportional" to its frequency of occurrence
+	- frequent symbols (e.g. "e") → shorter codes; rare symbols (e.g. "x") → longer codes → saves a lot of bits on real text
+- Built by constructing a **prefix tree** → guarantees no encoding is a **prefix** of another (so it decodes unambiguously)
+- Build **bottom-up** → repeatedly combine the two lowest-probability nodes
+
+**Huffman Example**
+- Symbols and probabilities:
+
+| Symbol | Probability |
+| --- | --- |
+| A | 0.3 |
+| B | 0.3 |
+| C | 0.2 |
+| D | 0.1 |
+| E | 0.1 |
+
+- Build (combine the two lowest each step; label branches 1 / 0):
+	- D(0.1) + E(0.1) → DE(0.2)
+	- C(0.2) + DE(0.2) → CDE(0.4)
+	- A(0.3) + B(0.3) → AB(0.6)
+	- AB(0.6) + CDE(0.4) → root(1.0)
+
+```
+                root
+            1 /      \ 0
+            AB         CDE
+          1/  \0     1/    \0
+          A    B     C      DE
+                           1/  \0
+                           D    E
+```
+
+- Resulting encoding:
+
+| Symbol | Encoding |
+| --- | --- |
+| A | 11 |
+| B | 10 |
+| C | 01 |
+| D | 001 |
+| E | 000 |
+
+- Example → `AABCBDAE` → `11 11 10 01 10 001 11 000` = `111110011000111000` → **18 bits**
+- A fixed 3-bit code → 8 chars × 3 bits = **24 bits** → Huffman saves 6 bits here
+
+# Lecture 12: Data Path & Control Unit
+
+**Back to the CPU — the Final Stretch**
+- Goal → design the **control unit** and put it all together
+- Reading: Sec. 4.1.1 (ignore JVM stuff), class slides
+
+**Data Path**
+- The core of the CPU → a **register file** feeding an **ALU**
+- Read two operands from the register file (`Reg_addr A`, `Reg_addr B`) onto buses A and B
+- The ALU computes a result; flags N, C, Z are produced; the **Result** bus writes back to the register file
+
+```
+   Result addr ─▶┌───────────────┐◀─ Reg_addr A
+                 │ Register File │◀─ Reg_addr B
+                 └──┬─────────┬──┘
+                    │ A       │ B
+                    ▼         ▼
+   ALU op ─▶ ┌───────────────────┐ ─▶ Z
+   Cin   ─▶  │        ALU        │ ─▶ N
+             └─────────┬─────────┘ ─▶ C
+                       │ Result
+                       └──────────────▶ (back to Register File)
+```
+
+**Data Path Operation**
+- Read operands from the register file → at the current rising clock edge → place on buses A and B
+- Specify the ALU operation
+- "Wait" for the ALU → designed to fit into 1 clock cycle (no real wait)
+- Set flags → N, C, Z
+- Write the RESULT bus to the selected register → really happens on the **next** rising edge
+
+**Adding Memory Access**
+- Memory for our machine → a **linear array of words** (each word 2/4/8 bytes), **byte-addressable** even if organized as words
+- Two steps → generate a memory address, then access memory at that address
+	- **Read** → wait for data ready → read into the Memory Data Register → move to the register file or ALU
+	- **Write** → put data out to memory
+- Need two new registers → a clocked interface to the asynchronous memory:
+	- **MAR** (Memory Address Register)
+	- **MDR** (Memory Data Register)
+- Control signals → **R/W'** and **D_ready** (data ready on read / "done" on write)
+
+**Register Transfer Language (RTL)**
+- A shorthand for describing register-to-register (and all other) data-path operations, and control logic
+- Everything comes from and goes to a register → so it can be described as register transfers through combinational logic
+- Notation:
+	- variables = (contents of) registers
+	- operations = assignment, arithmetic, logical, etc.
+	- memory = an array → `M[4]` (or `R[4]`) = location 4 of memory (or the register file)
+	- assignment → `R[4] ← R[4] + R[6]`
+	- conditional → `Z ← 1 if R[4] = 0`
+	- simultaneous ops (in time) → `MDR ← Mem[MAR] ; PC ← PC + 2`
+- Example → RTL for `Ld Rj, Ri`:
+	- `MAR ← Ri` (or `Ri + displacement`)
+	- `MDR ← Mem[MAR]` if `D_ready = 1`
+	- `Rj ← MDR`
+
+**Instruction Execution & Fetch**
+- Instruction execution includes steps beyond the specified operation → the **same** data path is reused for both data processing and these extra steps → keep augmenting it until it can do everything
+- Need logic to execute the control algorithm → a **control unit**
+- **Instruction fetch** → get an instruction from memory to start → needs two more registers:
+	- **PC** (program counter) → `PC ← PC + 2`
+	- **IR** (instruction register) → `IR ← Mem[PC]`
+- Plus the control signals to drive all this
+
+**Full (Augmented) Data Path**
+- Adds the memory-interface registers and the selection muxes around the core register-file / ALU:
+
+```
+            ┌────────┐       EnblRes│      Addr_A│  Addr_B│
+            │        │  Addr_Res ▼  ▼            ▼        ▼
+            │ Memory │◀────────▶┌───────────────┐
+            │        │          │ Register File │
+            └───┬────┘          └───┬───────┬───┘    Const
+       Sel_mem  │   ┌──[ PC ]       │       │         │
+         [MUX]──┴───┤  [ MAR ]    [Sel_A] [Sel_B]◀────┘
+                    │  [ MDR ]──┐    │ A     │ B
+                    │  [ IR ]   │    ▼       ▼
+                    │           │ ┌───────────────┐
+                    └───────────┘ │      ALU      │◀── Op
+              D_ready             └───────┬───────┘
+                                          │ Result
+              ──▶ To Control Unit (flags Z / N / C, IR opcode)
+```
+
+- New registers → PC, MAR, MDR, IR
+- New muxes → `Sel_mem` (address source: PC vs Result), `Sel_A` (ALU A input: reg file vs PC), `Sel_B` (ALU B input: reg file vs Const)
+- Write-enable controls → `Wr_PC`, `Wr_MAR`, `Wr_MDR`, `Wr_IR`, `EnblRes`
+
+**Control Unit**
+- Generates the control signals for the data path
+- Encoded as **microinstructions** (control words, **CW**) → a format with various fields
+- Driven by a **microcode engine** → supplies one CW per cycle
+
+**Control Word (CW) Format**
+- Groups of control signals → memory, ALU, PC, etc.
+
+```
+| R/W' | Sel_M | Wr_MAR | Wr_MDR | Wr_IR | EnblRes | Sel_A | Sel_B | Op | Wr_PC | ... |
+|◀──── Memory Control Group ────▶|◀────────── ALU / Reg Control ─────────▶| PC | Etc.|
+```
+
+**Microcode Engine**
+- Cycle (do forever):
+	- **fetch** the m-instruction → `CW ← m-Mem[m-PC]`
+	- **update** m-PC → `m-PC ← CW.Next` (a field in the CW; more general than `m-PC ← m-PC + 1`)
+	- **apply** the CW → run a wire from each CW bit out as a control signal
+	- wait for the end of the cycle
+- Very simple → a tiny CPU whose only job is "fetch m-instruction, update m-PC"
+- Location N in the m-store → the first CW of the m-code → the first CW of CPU instruction-fetch → on hardware reset, `m-PC ← N`
+- m-PC uses an extra **next-address field in the CW** itself → simplifies branching and allows easy relocation of m-instructions
+- Two "next" addresses:
+	- **Next1** → next sequential address (same as `m-PC + 1`, but eliminates an adder)
+	- **Next2** → conditional m-branch target
+
+**Microcode Engine Organization**
+
+```
+        ┌─────────────────┐   Addr     m-PC
+        │ m-program store │◀──────────── │
+        └────────┬────────┘              ▲
+            CW   │ Data              [ MUX ]◀── B_sel
+   ┌─────────────▼───────────────────────┐  ▲ ▲ ▲ ▲
+   │ Mem | ALU | Reg | Branch | PC | Next1 | Next2 |  Reset_addr   IR.opcode
+   └──┬──────────────────┬─────────────────┘    ▲
+      │ control          │ Branch field          │
+      ▼ signals          ▼                 [ B_sel Generator ]◀── Z, N, D_ready
+   (to CPU data path)                       ◀── IR (Opcode, R1, R2)
+```
+
+- The CW's **Next1** (sequential) and **Next2** (branch target) feed a mux
+- The **B_sel Generator** picks the next m-PC source using the **Branch** field + the selected flag
+
+**m-Branches**
+- Reasons to have a microcode branch:
+	- waiting for memory (`D_ready = 1`)
+	- implementing CPU branch instructions (BN, BZ, …)
+	- **instruction decode** → branch to the right CW for the fetched opcode
+- Conditional m-branch → `if cond then m-PC ← Next2 else m-PC ← Next1`
+- Unconditional m-branch → `m-PC ← Next1`
+
+**Branch Field in the CW**
+- 4 bits → specify which input signal to branch on (one-hot — only one bit may be 1):
+	- `1000` → branch on Z
+	- `0100` → branch on N
+	- `0010` → branch on Opcode (instruction **decode**)
+	- `0001` → branch on D_ready
+	- `0000` → do not branch
+- RTL for the m-branch:
+	- Z type → if Z = 1 then `m-PC ← Next2` else `Next1`
+	- N type → if N = 1 then `m-PC ← Next2` else `Next1`
+	- Opcode → `m-PC ← IR.opcode` (no arithmetic — just jam the value in)
+	- D_ready → if D_ready = 1 then `m-PC ← Next2` else `Next1`
+	- `0000` → `m-PC ← Next1`
+- **B_sel Generator** → selects the next m-PC via a mux, based on the branch type + the value of the selected control signal
+
+**Instruction Decode**
+- Implemented as a microcode branch → `m-PC ← IR[opcode]` → no arithmetic, just jam the value in
+- At each opcode address → a group of CWs implementing all the steps of that instruction (I-fetch, PC update, I-decode, the RR ALU op, …)
+- For a whole instruction group → use further decoding on some opcode bits to pick the actual instruction
+
+**Microprograms**
+- Represented with **symbolic notation** (equivalent to the m-store contents, minus labels)
+- Tools (compilers/assemblers) generate the CW bit strings → nobody would want to do it by hand
+- The full m-program implements **all** CPU instructions
+- Convention for writing them → only show the signals that must be "1" for the next clock (the rest are don't-care)
+	- use `Iden` = pass-through ALU function → `Result ← B`
+	- register specifiers x, y come from `IR.r1`, `IR.r2`
+
+<!-- last cleaned: end of Lecture 12 (Data Path & Control Unit) -->
 
 
