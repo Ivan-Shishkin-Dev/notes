@@ -3728,5 +3728,97 @@ vector<int> dijkstra(const vector<vector<pair<int,int>>>& graph, int s) {
 	- Maintain a `set` of words already used so we don't revisit and loop forever
 - BFS guarantees the *first* time we pop `endWord` off the queue, we've found a shortest ladder
 
-<!-- last cleaned: end of Lecture 14 (Single-Source Shortest Path: Dijkstra's, Word Ladder) -->
+# Course Review
+
+**Course Topics**
+- Time analysis and time complexity
+- Lists: Unordered, Ordered, Sorted
+- Stacks & Queues
+- Hashing and Hash Tables
+- Binary Search Trees
+- Priority Queues (Binary Heaps)
+- Sorting & Searching
+- Graph representation
+- Graph traversals
+- Graph algorithms
+
+**Analysis**
+- T(N) → running time in instructions, worst case
+	- Accessing during a `for` loop counts as + 1
+	- For `if` statements we take the worst-case branch
+	- A `return` costs 1 + cost of the expression
+- Time complexity in Big-O notation
+- Measured (empirical) time of algorithms
+	- Using `Timer.h`
+- Interpreting graphs of functions → what are we actually measuring?
+- Thinking about our testing data → and the unusual measurements we may get
+
+**Lists: Unordered, Ordered, Sorted**
+- Unordered
+	- Must use linear search
+	- Doesn't matter where you add/remove → so we choose the spot that's O(1)
+- Ordered
+	- Like class `string`
+- Sorted
+	- Forces copy-up / copy-down on insert/remove
+	- Can use binary search to find
+
+**Stacks & Queues**
+- Stack interface (LIFO) → `push()`, `pop()`, `top()`, `isEmpty()`, `isFull()`
+- Queue interface (FIFO) → `enq()`, `deq()`, `front()`, `isEmpty()`, `isFull()`
+- Implementations are all constant time:
+	- Linked list: stack, queue
+	- Array: stack, queue
+
+**Hashing & Hash Tables**
+- Tables → key/value pairs
+- Critical decisions:
+	- Choose a good hash function
+		- URLs are hard and most of the time break the hash function
+	- Choose a table of good size
+	- How to handle collisions
+		- Separate chaining
+		- Open addressing (e.g. linear probing)
+- insert, find, remove can be O(1)
+
+**Binary Search Trees**
+- insert, find, remove can be O(log N)
+- Traversals: pre-order, in-order, post-order
+- Degenerates to O(N) when keys are nearly sorted
+- Fixed with self-balancing trees → AVL, red-black, WAVL, crumple
+
+**Sorting & Searching**
+- O(N²) sorts
+	- Insertion sort
+	- Selection sort
+	- Bubble sort
+- O(N log N) sorts
+	- Quick sort
+	- Heap sort
+	- Merge sort
+- Sorting visualization videos:
+	- [10 FORBIDDEN Sorting Algorithms](https://www.youtube.com/watch?v=ktgxMtWMflU)
+	- [Visualization and Comparison of Sorting Algorithms](https://www.youtube.com/watch?v=ZZuD6iUe3Pc)
+	- [15 Sorting Algorithms in 6 Minutes](https://www.youtube.com/watch?v=kPRA0W1kECg)
+
+**Graph Representation**
+- Representation:
+	- Adjacency list
+	- Adjacency matrix
+- What are the trade-offs?
+- What did you do for `edges_from` in HW8?
+	- `VertexList Graph::edges_from(vertex vertex) const`
+
+**Graph Traversals**
+- Depth-first (DFS)
+- Breadth-first (BFS)
+- Iterative deepening DFS
+- Best-first search
+
+**Graph Algorithms**
+- Topological sort
+- Minimum spanning tree: Kruskal's, Prim's
+- Shortest path: Dijkstra's, Bellman-Ford, A*
+
+<!-- last cleaned: end of Course Review -->
 
