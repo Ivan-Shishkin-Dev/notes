@@ -2370,7 +2370,7 @@ syscall
 - Common codes → `1` print int, `4` print string, `11` print char, `10` exit
 - Files → must **open (13)** before **read (14)** / **write (15)**, then **close (16)**; `$v0` returns the file descriptor (negative = error)
 
-# Lecture 8: Memory — Latches
+# Lecture 6: Memory — Latches
 
 **Today's Objectives**
 - Ideal vs real gates
@@ -2506,7 +2506,7 @@ syscall
                       Clock
 ```
 
-# Lecture 9: Flip-Flops & RAM
+# Lecture 7: Flip-Flops & RAM
 
 **Flip-Flops**
 - D latches still have a problem → input changes while the clock is "1" still propagate
@@ -2577,7 +2577,7 @@ syscall
                  Clock
 ```
 
-# Lecture 10: More Memory — Organization & Decoding
+# Lecture 8: More Memory — Organization & Decoding
 
 **Today's Objectives**
 - Continue the study of memory organization
@@ -2588,7 +2588,7 @@ syscall
 - **Clock & clocked latches** → better control of *when* the output changes
 - **Flip-flops** → best way to store data, based on the clock's rising edge → one change per clock cycle, output stable for the whole period
 - **Registers** → aggregate a number of latches/flip-flops, controlled as a unit
-- **Register file** → array of registers (see [[ICS_51#Lecture 9: Flip-Flops & RAM|Lecture 9]])
+- **Register file** → array of registers (see [[ICS_51#Lecture 7: Flip-Flops & RAM|Lecture 7]])
 
 **Memory Chips**
 - A memory IC is typically organized as a **cell matrix** → NxN (good for layout)
@@ -2665,7 +2665,7 @@ syscall
 - High address bits → decoder → one **CS** per chip → selects the active chip
 - Only the selected chip (with OE asserted) drives the shared data bus
 
-# Lecture 11: Disk Memory, Error Detection/Correction & Compression
+# Lecture 9: Disk Memory, Error Detection/Correction & Compression
 
 **Today's Objectives**
 - Disk memory
@@ -2793,7 +2793,7 @@ syscall
 - Example → `AABCBDAE` → `11 11 10 01 10 001 11 000` = `111110011000111000` → **18 bits**
 - A fixed 3-bit code → 8 chars × 3 bits = **24 bits** → Huffman saves 6 bits here
 
-# Lecture 12: Data Path & Control Unit
+# Lecture 10: Data Path & Control Unit
 
 **Back to the CPU — the Final Stretch**
 - Goal → design the **control unit** and put it all together
@@ -2961,6 +2961,6 @@ syscall
 	- use `Iden` = pass-through ALU function → `Result ← B`
 	- register specifiers x, y come from `IR.r1`, `IR.r2`
 
-<!-- last cleaned: end of Lecture 12 (Data Path & Control Unit) -->
+<!-- last cleaned: end of Lecture 10 (Data Path & Control Unit) -->
 
 
