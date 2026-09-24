@@ -6,7 +6,11 @@ My personal class notes from UC Irvine, organized by academic quarter.
 
 I take raw notes during lecture in [Obsidian](https://obsidian.md/), then at the end of each day I have [Claude Code](https://claude.com/claude-code) clean them up — fixing typos, normalizing formatting, splitting content into logical lecture boundaries, and expanding shorthand where it helps readability. The original meaning, personal annotations, and humor are preserved.
 
-## Current Courses (Spring 2026)
+## Current Courses (Fall 2026)
+
+- **ICS 161** — Design & Analysis of Algorithms
+
+## Past Courses (Spring 2025)
 
 - **ICS 46** — Data Structures & Algorithms (C++)
 - **ICS 51** — Computer Architecture
@@ -15,10 +19,10 @@ I take raw notes during lecture in [Obsidian](https://obsidian.md/), then at the
 ## Structure
 
 - All notes live under `content/` (the Quartz content directory)
-- Inside `content/`, each top-level folder is a quarter (e.g. `content/Spring 2026/`)
+- Inside `content/`, each top-level folder is a quarter (e.g. `content/Fall 2026/`), labeled by the school year's start year
 - Each course is a single `.md` file inside its quarter folder, with all lectures appended sequentially
 - `content/Pictures/` holds image embeds referenced by the notes
-- Older quarters are archived as zip files in `content/Winter 2026/`
+- Older quarters are archived as zip files in `content/Winter 2025/`
 
 ## Hosting
 

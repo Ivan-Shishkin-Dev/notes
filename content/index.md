@@ -10,15 +10,15 @@ I take raw notes during lecture in [Obsidian](https://obsidian.md/), then at the
 
 - [[Fall 2026/ICS_161|ICS 161 — Design & Analysis of Algorithms]]
 
-## Spring 2026
+## Spring 2025
 
-- [[Spring 2026/ICS_46|ICS 46 — Data Structures & Algorithms (C++)]]
-- [[Spring 2026/ICS_51|ICS 51 — Computer Architecture]]
-- [[Spring 2026/Informatics_43|Informatics 43 — Software Engineering]]
+- [[Spring 2025/ICS_46|ICS 46 — Data Structures & Algorithms (C++)]]
+- [[Spring 2025/ICS_51|ICS 51 — Computer Architecture]]
+- [[Spring 2025/Informatics_43|Informatics 43 — Software Engineering]]
 
 ## Archive
 
-Older quarters are kept as zip files in `Winter 2026/`.
+Older quarters are kept as zip files in `Winter 2025/`.
 
 ---
 
