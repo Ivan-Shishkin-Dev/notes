@@ -6,6 +6,10 @@ My personal class notes from UC Irvine, organized by academic quarter.
 
 I take raw notes during lecture in [Obsidian](https://obsidian.md/), then at the end of each day I have [Claude Code](https://claude.com/claude-code) clean them up — fixing typos, normalizing formatting, splitting content into logical lecture boundaries, and expanding shorthand where it helps readability. The original meaning, personal annotations, and humor are preserved.
 
+## Fall 2026
+
+- [[Fall 2026/ICS_161|ICS 161 — Design & Analysis of Algorithms]]
+
 ## Spring 2026
 
 - [[Spring 2026/ICS_46|ICS 46 — Data Structures & Algorithms (C++)]]

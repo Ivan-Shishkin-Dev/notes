@@ -5,17 +5,21 @@ University course notes vault organized by academic quarter. The user is a CS st
 ## Structure
 
 - All published notes live under `content/` (this is the Quartz content directory — the site builds from here)
-- Inside `content/`, top-level folders are quarters: `content/Spring 2026/`, `content/Winter 2026/`
-- Each course is a **single .md file** per class, using underscores in filenames (e.g., `Informatics_43.md`, `ICS_46.md`, `ICS_51.md`)
+- Inside `content/`, top-level folders are quarters, named `<Season> <YYYY>` (e.g., `content/Fall 2026/`, `content/Spring 2026/`, `content/Winter 2026/`)
+- Each course is a **single .md file** per class, using underscores in filenames (e.g., `ICS_161.md`, `Informatics_43.md`, `ICS_46.md`)
 - All lectures for a course live in that one file, appended sequentially
 - `content/Winter 2026/` contains archived zip files from prior quarter courses
 - `content/Pictures/` holds image assets referenced by note embeds
 - Repo root holds Quartz config (`quartz.config.ts`, `quartz.layout.ts`, `package.json`, `quartz/`) and the deploy workflow (`.github/workflows/deploy.yml`) — do not touch these during normal note cleaning
 
-## Current Courses (Spring 2026)
+## Current Courses (Fall 2026)
+
+- **ICS 161** → Design & Analysis of Algorithms
+
+## Past Courses (Spring 2026, still published)
 
 - **ICS 46** → Data Structures & Algorithms (C++)
-- **ICS 51** → Computer Architecture (hardware, ISA, x86)
+- **ICS 51** → Computer Architecture (hardware, ISA, MIPS)
 - **Informatics 43** → Software Engineering (process, requirements, principles)
 
 ## Formatting Conventions
