@@ -9,6 +9,7 @@ I take raw notes during lecture in [Obsidian](https://obsidian.md/), then at the
 ## Fall 2026
 
 - [[Fall 2026/ICS_161|ICS 161 — Design & Analysis of Algorithms]]
+- [[Fall 2026/ICS_178|ICS 178 — Machine Learning & Data Mining]]
 
 ## Spring 2025
 

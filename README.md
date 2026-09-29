@@ -9,6 +9,7 @@ I take raw notes during lecture in [Obsidian](https://obsidian.md/), then at the
 ## Current Courses (Fall 2026)
 
 - **ICS 161** — Design & Analysis of Algorithms
+- **ICS 178** — Machine Learning & Data Mining
 
 ## Past Courses (Spring 2025)
 

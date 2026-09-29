@@ -15,6 +15,7 @@ University course notes vault organized by academic quarter. The user is a CS st
 ## Current Courses (Fall 2026)
 
 - **ICS 161** → Design & Analysis of Algorithms
+- **ICS 178** → Machine Learning & Data Mining (Python, NumPy, scikit-learn)
 
 ## Past Courses (Spring 2025, still published)
 
